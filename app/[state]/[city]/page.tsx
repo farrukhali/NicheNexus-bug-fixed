@@ -35,14 +35,15 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     const metaTitle = getMetaTitle(formattedCity, stateCode, stateName)
 
     return {
-        title: metaTitle,
-        description: `Looking for top-rated gutter installers in ${formattedCity}, ${stateCode}? We provide seamless gutter installation, guards, and cleaning. Get a fast free quote today!`,
+        title: `Gutter Installation Near Me in ${formattedCity}, ${stateCode} | Local Contractors`,
+        description: `Looking for gutter installation near me in ${formattedCity}, ${stateCode}? Find licensed local gutter contractors for seamless gutters, gutter guards, gutter cleaning, soffit & fascia repair. Get a free quote in 24 hours!`,
+        keywords: `gutter installation near me ${formattedCity}, gutter repair near me ${formattedCity} ${stateCode}, gutter guards near me ${formattedCity}, seamless gutters near me ${formattedCity}, gutter cleaning near me ${formattedCity}, soffit repair near me ${formattedCity}, gutter companies near me ${formattedCity}`,
         alternates: {
             canonical: `/${state}/${city}`
         },
         openGraph: {
-            title: `Best Gutter Installation in ${formattedCity}, ${stateCode}`,
-            description: `We are the #1 rated gutter experts in ${formattedCity}. Call now for seamless gutters, guards, and repairs. Lifetime warranty included.`,
+            title: `Find Gutter Installation Near Me in ${formattedCity}, ${stateCode}`,
+            description: `Connect with the #1 rated gutter contractors near you in ${formattedCity}. Seamless gutters, gutter guards, cleaning & repairs. Lifetime warranty. Free quotes!`,
             url: `https://usgutterinstallation.com/${state}/${city}`,
         }
     }

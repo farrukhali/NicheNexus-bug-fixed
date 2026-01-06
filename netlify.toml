@@ -4,3 +4,62 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Performance Headers for SEO & Core Web Vitals
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security Headers
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # Caching for Static Assets (improves Core Web Vitals)
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sitemap*.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "application/xml; charset=utf-8"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "text/plain; charset=utf-8"
+
+# Redirects for Common Crawl Patterns
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/index"
+  to = "/"
+  status = 301
+
+# Handle trailing slashes consistently
+[[redirects]]
+  from = "/*/"
+  to = "/:splat"
+  status = 301
+
+# Handle .html extensions that bots might try
+[[redirects]]
+  from = "/*.html"
+  to = "/:splat"
+  status = 301
+
+# 404 fallback - important for crawl budget
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404

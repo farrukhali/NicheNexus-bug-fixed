@@ -8,6 +8,7 @@ import { CallBtn, FloatingCallBtn, NavbarCallBtn } from '@/components/CallBtn'
 import CoverageStats from '@/components/CoverageStats'
 import Breadcrumb from '@/components/Breadcrumb'
 import CityMap from '@/components/CityMap'
+import InternalLinks from '@/components/InternalLinks'
 
 interface ServicePageProps {
     city: string
@@ -452,6 +453,13 @@ export default function ServicePage({ city, state, stateCode, zipCodes, relatedC
                     <CallBtn className="py-4 px-12 text-xl" label={`Call Now in ${formattedCity}`} />
                 </div>
             </section>
+
+            {/* Internal Links for Crawlability */}
+            <InternalLinks
+                currentCity={formattedCity}
+                stateCode={stateCode}
+                relatedCities={relatedCities}
+            />
 
             <TrustBadges />
             <Footer />

@@ -4,50 +4,52 @@ export const revalidate = 86400 // Cache for 1 day
 
 export async function GET() {
     const baseUrl = 'https://usgutterinstallation.com'
+    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
 
     // Fetch all distinct states
-    // Note: Supabase doesn't support 'distinct' easily in standard query builder without .rpc, 
-    // but we can fetch 'state_id' and process in JS as the list is small (50 states).
-    // Or simpler: We know the 50 states or we fetch distinct state_id from cities.
-    // Fetching all might be heavy? No, "usa city name" is ~40k rows. 
-    // Selecting just state_id is fast enough (few MBs max data transfer), but better to use a dedicated query if possible.
-    // Let's just fetch all and dedupe. It's safe for build/ISR.
-
-    // Better optimization: Use a postgres function `.rpc('get_distinct_states')` if we could, 
-    // but without database access to create functions, we'll fetch 'state_id' with head:false/count? 
-    // No, we need values.
-    // We'll trust standard select.
-
     const { data: cities } = await supabase
         .from('usa city name')
         .select('state_id')
-    // We assume this table has all states.
 
     if (!cities) {
-        return new Response('<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></sitemapindex>', {
+        return new Response('<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></sitemapindex>', {
             headers: { 'Content-Type': 'application/xml' }
         })
     }
 
     const uniqueStates = Array.from(new Set(cities.map(c => c.state_id))).sort()
 
+    // Priority order for sitemaps:
+    // 1. Static pages (highest priority)
+    // 2. States A-F (common states like CA, FL, TX)
+    // 3. States G-M
+    // 4. States N-Z
+
+    const priorityStates = ['CA', 'TX', 'FL', 'NY', 'PA', 'IL', 'OH', 'GA', 'NC', 'MI'] // High population states
+    const otherStates = uniqueStates.filter(s => !priorityStates.includes(s))
+
     const sitemapIndexXML = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <sitemap>
         <loc>${baseUrl}/sitemap/static.xml</loc>
-        <lastmod>${new Date().toISOString()}</lastmod>
+        <lastmod>${today}</lastmod>
     </sitemap>
-    ${uniqueStates.map(state => `
+    ${priorityStates.filter(s => uniqueStates.includes(s)).map(state => `
     <sitemap>
         <loc>${baseUrl}/sitemap/${state}.xml</loc>
-        <lastmod>${new Date().toISOString()}</lastmod>
-    </sitemap>
-    `).join('')}
+        <lastmod>${today}</lastmod>
+    </sitemap>`).join('')}
+    ${otherStates.map(state => `
+    <sitemap>
+        <loc>${baseUrl}/sitemap/${state}.xml</loc>
+        <lastmod>${today}</lastmod>
+    </sitemap>`).join('')}
 </sitemapindex>`
 
     return new Response(sitemapIndexXML, {
         headers: {
             'Content-Type': 'application/xml',
+            'Cache-Control': 'public, max-age=3600, s-maxage=86400',
         },
     })
 }
