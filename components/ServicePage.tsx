@@ -449,43 +449,38 @@ export default function ServicePage({ city, state, stateCode, zipCodes, relatedC
                                             "mainEntity": content.faqAnswers ? [
                                                 {
                                                     "@type": "Question",
-                                                    "name": content.faqAnswers.installation.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.installation.answer }
+                                                    "name": `How much does gutter installation cost in ${formattedCity}?`,
+                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.cost }
                                                 },
                                                 {
                                                     "@type": "Question",
-                                                    "name": content.faqAnswers.cost.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.cost.answer }
+                                                    "name": `What are the best gutter guards for ${stateCode} weather?`,
+                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.bestGuard }
                                                 },
                                                 {
                                                     "@type": "Question",
-                                                    "name": content.faqAnswers.guarads.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.guarads.answer }
+                                                    "name": `How long does gutter installation take in ${formattedCity}?`,
+                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.timeline }
                                                 },
                                                 {
                                                     "@type": "Question",
-                                                    "name": content.faqAnswers.timeline.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.timeline.answer }
+                                                    "name": `How often should I clean my gutters in ${formattedCity}?`,
+                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.cleaningFrequency }
                                                 },
                                                 {
                                                     "@type": "Question",
-                                                    "name": content.faqAnswers.cleaning.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.cleaning.answer }
+                                                    "name": `Do you offer emergency gutter repair in ${formattedCity}?`,
+                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.emergency }
                                                 },
                                                 {
                                                     "@type": "Question",
-                                                    "name": content.faqAnswers.repair.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.repair.answer }
+                                                    "name": `Do you repair soffit and fascia boards?`,
+                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.soffitFascia }
                                                 },
                                                 {
                                                     "@type": "Question",
-                                                    "name": content.faqAnswers.soffit.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.soffit.answer }
-                                                },
-                                                {
-                                                    "@type": "Question",
-                                                    "name": content.faqAnswers.warranty.question,
-                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.warranty.answer }
+                                                    "name": `Do you offer warranties on gutter installation?`,
+                                                    "acceptedAnswer": { "@type": "Answer", "text": content.faqAnswers.warranty }
                                                 }
                                             ] : []
                                         },
@@ -610,5 +605,4 @@ export default function ServicePage({ city, state, stateCode, zipCodes, relatedC
                             <TrustBadges />
                             <Footer />
                         </div>
-                        )
 }
