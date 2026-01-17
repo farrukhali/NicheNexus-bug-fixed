@@ -103,7 +103,7 @@ export default async function TopBusinesses({ city, state }: TopBusinessesProps)
 
                 <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-lg bg-white">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                        <thead className="bg-slate-900 text-white">
                             <tr>
                                 <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider">#</th>
                                 <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider">Company Name</th>
@@ -117,12 +117,12 @@ export default async function TopBusinesses({ city, state }: TopBusinessesProps)
                                 return (
                                     <tr
                                         key={lead.id || index}
-                                        className="hover:bg-blue-50/50 transition-colors group"
+                                        className="hover:bg-slate-50 transition-colors group"
                                         itemScope
                                         itemType="https://schema.org/LocalBusiness"
                                         itemProp="itemListElement"
                                     >
-                                        <td className="py-4 px-6 font-bold text-blue-600">
+                                        <td className="py-4 px-6 font-bold text-slate-900">
                                             {index + 1}
                                         </td>
                                         <td className="py-4 px-6 font-medium text-slate-900" itemProp="name">
@@ -134,7 +134,7 @@ export default async function TopBusinesses({ city, state }: TopBusinessesProps)
                                         <td className="py-4 px-6 text-right">
                                             <a
                                                 href={`tel:${mainPhoneNumber}`}
-                                                className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-bold py-2.5 px-6 rounded-full transition-all hover:scale-105 shadow-md shadow-blue-200"
+                                                className="inline-block bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold py-2.5 px-6 rounded-full transition-all hover:scale-105 shadow-md"
                                                 itemProp="telephone"
                                             >
                                                 {actionText}
