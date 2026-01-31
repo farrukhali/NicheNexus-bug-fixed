@@ -154,13 +154,31 @@ export default function AdminDashboard() {
 
     const handleSaveSite = async () => {
         setLoading(true)
+        // Create the save payload
+        const savePayload: any = {
+            ...siteConfig,
+            // STOP FORCING 'localhost' - it causes unique constraint errors!
+            // If empty, use a unique pending domain based on the niche slug.
+            domain: siteConfig.domain || `pending-${siteConfig.niche_slug || Date.now()}`,
+            niche_slug: siteConfig.niche_slug || null
+        }
+
+        // If we don't have an ID (e.g. new niche config), we try to find one by niche_slug 
+        // to avoid duplicate domain errors if niche_slug already exists.
+        if (!savePayload.id && savePayload.niche_slug) {
+            const { data: existing } = await supabase
+                .from('site_configs')
+                .select('id')
+                .eq('niche_slug', savePayload.niche_slug)
+                .single()
+            if (existing) {
+                savePayload.id = existing.id
+            }
+        }
+
         const { error } = await supabase
             .from('site_configs')
-            .upsert({
-                ...siteConfig,
-                domain: siteConfig.domain || 'localhost',
-                niche_slug: siteConfig.niche_slug || null
-            })
+            .upsert(savePayload)
 
         if (error) {
             setMessage({ type: 'error', text: error.message })
@@ -388,9 +406,25 @@ export default function AdminDashboard() {
                 <header className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-slate-900">
-                            {activeTab === 'site' ? 'Global Site Settings' : 'Niche Configuration'}
+                            {activeTab === 'site' ? 'Global Site Settings' :
+                                activeTab === 'seo' ? 'Niche SEO Settings' :
+                                    activeTab === 'expert' ? 'Expert Configuration' :
+                                        activeTab === 'trust' ? 'Trust Signals' :
+                                            activeTab === 'niches' ? 'Niche Manager' : 'Admin Dashboard'}
                         </h1>
-                        <p className="text-slate-500">Manage how your niche sites look and behave.</p>
+                        <div className="flex flex-col gap-2 mt-1">
+                            <p className="text-slate-500">
+                                {activeTab === 'niches' ? 'Manage your list of niches.' : 'Configuring site behavior and SEO templates.'}
+                            </p>
+                            {selectedNiche && activeTab !== 'niches' && (
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="px-4 py-1.5 bg-blue-600 text-white text-sm font-black rounded-full shadow-lg shadow-blue-500/30 animate-pulse">
+                                        Editing Niche: {selectedNiche.name.toUpperCase()}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono">({selectedNiche.slug})</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     {message.text && (
                         <div className={`px-6 py-3 rounded-xl font-medium animate-bounce ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
