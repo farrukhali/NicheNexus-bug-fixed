@@ -115,11 +115,11 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                         <div className="hidden lg:block relative">
                             <div className="relative w-full aspect-[4/3] max-w-lg mx-auto">
                                 <div className="absolute inset-0 bg-blue-500 rounded-3xl mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-                                <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
+                                <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden shadow-2xl">
                                     <img
                                         src={niche.cityHeroImage}
                                         alt={`${niche.name} in ${formattedCity}`}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain bg-slate-900"
                                     />
                                 </div>
                             </div>

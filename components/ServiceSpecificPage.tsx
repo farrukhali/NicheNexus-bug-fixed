@@ -153,7 +153,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                             {h1Title || `${service.title} in ${formattedCity}, ${stateCode.toUpperCase()}`}
                         </h1>
                         <p className="text-xl text-slate-300 mb-8 font-light">
-                            {service.description(formattedCity, formattedState)}
+                            {replacePlaceholders(service.description(formattedCity, formattedState), placeholderVars)}
                         </p>
 
                         {/* Quick Info Pills */}
@@ -174,22 +174,21 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                         </div>
                     </div>
 
-                    <div className="relative hidden lg:block">
-                        <div className="relative w-full aspect-square max-w-lg mx-auto">
-                            <div className="absolute inset-0 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-                            {/* Professional Dynamic Service Image */}
-                            <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden shadow-2xl">
-                                <Image
-                                    src={service.heroImage}
-                                    alt={`${service.title} - Professional Service`}
-                                    fill
-                                    className="object-cover"
-                                    priority
-                                    sizes="(max-width: 768px) 100vw, 50vw"
-                                />
+                    {/* Hero Image - Right Side */}
+                    {niche.cityHeroImage && (
+                        <div className="relative hidden lg:block">
+                            <div className="relative w-full aspect-[4/3] max-w-lg mx-auto">
+                                <div className="absolute inset-0 bg-blue-500 rounded-3xl mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                                <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden shadow-2xl">
+                                    <img
+                                        src={niche.cityHeroImage}
+                                        alt={`${service.title} in ${formattedCity}`}
+                                        className="w-full h-full object-contain bg-slate-900"
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </header>
 
