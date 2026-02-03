@@ -417,7 +417,7 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
 
             <InternalLinks currentCity={formattedCity} stateCode={stateCode} relatedCities={relatedCities} />
             <TrustBadges />
-            <Footer />
+            <Footer city={formattedCity} stateCode={stateCode} />
         </div>
     )
 }

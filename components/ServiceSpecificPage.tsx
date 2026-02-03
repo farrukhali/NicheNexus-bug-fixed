@@ -441,7 +441,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
 
             <TrustBadges />
             <RelatedServices city={formattedCity} state={stateCode} />
-            <Footer />
+            <Footer city={formattedCity} stateCode={stateCode} />
         </div>
     )
 }

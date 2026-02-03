@@ -250,7 +250,7 @@ export default async function StatePage(props: StatePageProps) {
 
 
             <TrustBadges />
-            <Footer />
+            <Footer stateCode={stateCode} />
         </div >
     )
 }

@@ -4,10 +4,18 @@ import { getNicheConfig } from '@/lib/niche-configs'
 import { replacePlaceholders } from '@/lib/seo-utils'
 import { Facebook, Instagram, Twitter, Linkedin, Phone, Mail, MapPin } from 'lucide-react'
 
-export default async function Footer() {
+interface FooterProps {
+    city?: string
+    stateCode?: string
+}
+
+export default async function Footer({ city, stateCode }: FooterProps) {
     const currentYear = new Date().getFullYear()
     const siteConfig = await getSiteConfig()
     const niche = await getNicheConfig(siteConfig.nicheSlug)
+
+    const citySlug = city?.toLowerCase().replace(/ /g, '-')
+    const stateSlug = stateCode?.toLowerCase()
 
     const socialLinks = [
         { url: siteConfig.facebookUrl, icon: Facebook, label: 'Facebook' },
@@ -71,9 +79,18 @@ export default async function Footer() {
                     <div>
                         <h4 className="text-white font-bold text-lg mb-6">Services</h4>
                         <ul className="space-y-3 text-sm">
-                            {niche.services.slice(0, 5).map((service, i) => (
-                                <li key={i}><span className="cursor-default hover:text-white transition-colors">{service.title}</span></li>
-                            ))}
+                            {niche.services.slice(0, 5).map((service, i) => {
+                                const href = city && stateCode
+                                    ? `/${stateSlug}/${citySlug}/${service.slug}`
+                                    : '/sitemap'
+                                return (
+                                    <li key={i}>
+                                        <Link href={href} className="hover:text-white transition-colors">
+                                            {service.title}
+                                        </Link>
+                                    </li>
+                                )
+                            })}
                         </ul>
                     </div>
 

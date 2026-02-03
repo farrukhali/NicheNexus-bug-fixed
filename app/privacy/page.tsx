@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import TrustBadges from '@/components/TrustBadges'
 import { getSiteConfig } from '@/lib/site-config'
 import { getNicheConfig } from '@/lib/niche-configs'
+import { replacePlaceholders } from '@/lib/seo-utils'
 
 export async function generateMetadata() {
     const siteConfig = await getSiteConfig()
@@ -132,8 +133,8 @@ export default async function PrivacyPage() {
                     <p>If you have any questions about this Privacy Policy or our data practices, please contact us:</p>
                     <address className="not-italic">
                         <strong>{siteConfig.siteName}</strong><br />
-                        Phone: <a href={`tel:${siteConfig.contactPhone}`} className="text-blue-600">{siteConfig.contactPhone}</a><br />
-                        Email: <a href={`mailto:${siteConfig.contactEmail}`} className="text-blue-600">{siteConfig.contactEmail}</a>
+                        Phone: <a href={`tel:${siteConfig.contactPhone}`} className="text-blue-600 font-medium hover:underline">{siteConfig.contactPhone}</a><br />
+                        Email: <a href={`mailto:${replacePlaceholders(siteConfig.contactEmail, { baseurl: siteConfig.domain })}`} className="text-blue-600 font-medium hover:underline">{replacePlaceholders(siteConfig.contactEmail, { baseurl: siteConfig.domain })}</a>
                     </address>
                 </div>
             </main>
