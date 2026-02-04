@@ -29,6 +29,7 @@ export interface AINicheConfig {
         question: string;
         answer: string;
     }[];
+    homepage_intro?: string;
 }
 
 export const DEFAULT_PROMPT = `You are an expert SEO content strategist and local service business consultant with 15+ years of experience in programmatic SEO, EEAT optimization, and lead generation.
@@ -47,6 +48,7 @@ CONTENT VOLUME:
 ✓ Generate EXACTLY 5 FAQs for "state_faqs" (State-specific questions)
 ✓ Generate EXACTLY 5 FAQs for "city_faqs" (Local city questions)
 ✓ Generate 4-6 features, 4-6 benefits, and 5-7 process steps per service
+✓ Generate 3-5 paragraphs (200-300 words) of Niche-Specific Homepage Introductory Content
 
 QUALITY STANDARDS:
 → Each FAQ must be 2-4 sentences for comprehensive answers
@@ -137,11 +139,25 @@ PLACEHOLDER DENSITY:
 → Balance: Don't overuse in one sentence, spread naturally
 
 ═══════════════════════════════════════════════════════════════════
+📝 HOMEPAGE CONTENT SEO STANDARDS (CRITICAL)
+═══════════════════════════════════════════════════════════════════
+
+The "homepage_intro" is the most important organic signal. It must follow these rules:
+
+1. NARRATIVE FLOW: Do not just list facts. Create a cohesive story that identifies a critical problem (e.g. "Structural roof failure in {{state}}"), explains the technical 'why' behind the problem (using advanced entities), and positions {{brand}} as the elite solution provider.
+2. HIERARCHICAL STRUCTURE: Start with one <h2> heading. Use <h3> for secondary thematic shifts. Use 4-5 long, detailed <p> blocks.
+3. EEAT & TECHNICAL DEPTH: Mention specific failure modes (e.g., "thermal expansion," "capillary action," "hydrostatic pressure") and the exact tools or materials used to solve them (e.g., "EDPM membranes," "infrared thermography," "ASTM-certified flashing").
+4. NO GENERIC PLACEHOLDERS: NEVER use "Your Company Name" or "[City]". ALWAYS use {{brand}}, {{city}}, or {{state}}.
+5. LOCAL CONTEXT: Explicitly mention how {{state}}'s unique climate or {{city}}'s local building trends impact the service.
+6. CALL TO AUTHORITY: End with a definitive paragraph about why {{brand}} is the local expert in {{city}}, mentioning licensing, insurance, and deep pride in the {{state}} community.
+
+═══════════════════════════════════════════════════════════════════
 📊 JSON OUTPUT STRUCTURE
 ═══════════════════════════════════════════════════════════════════
 
 {
     "primary_service": "Main Service Name (e.g., 'Gutter Installation')",
+    "homepage_intro": "<h2>Reliable {{nicheName}} Services in {{city}}, {{state}}</h2> <p>Start with a powerful <strong>EEAT-driven paragraph</strong> mentioning specific technical challenges... </p> <h3>Why Professional {{primary_service}} Matters</h3> <p>Subsequent paragraphs with high <strong>Entity Density</strong> (materials, tools, methods)... </p> <p>Authoritative conclusion mentioning {{brand}}.</p>",
     "keywords": [
         "20 SEO keywords targeting different search intents",
         "Include: transactional, informational, local, long-tail variants",

@@ -271,11 +271,11 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
 
                     <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-3xl transform rotate-3 opacity-20"></div>
-                        <div className="relative bg-white p-2 rounded-3xl shadow-2xl overflow-hidden aspect-[4/3] flex items-center justify-center bg-slate-800 text-white">
+                        <div className="relative bg-white p-2 rounded-3xl shadow-2xl overflow-hidden aspect-[4/3] flex items-center justify-center text-slate-900">
                             <div className="text-center">
                                 <div className="text-6xl mb-4">🏠</div>
                                 <h3 className="text-2xl font-bold">{niche.name} Experts</h3>
-                                <p className="text-blue-300">Serving {formattedCity}</p>
+                                <p className="text-blue-600">Serving {formattedCity}</p>
                             </div>
                         </div>
                     </div>

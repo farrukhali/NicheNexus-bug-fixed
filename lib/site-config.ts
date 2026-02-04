@@ -78,6 +78,8 @@ export interface SiteConfig {
     expertSettings?: ExpertSettings;
     // Trust Signals
     trustSignals?: TrustSignals;
+    // Homepage Content
+    homepageContent?: string;
 }
 
 export const getSiteConfig = async (): Promise<SiteConfig> => {
@@ -171,6 +173,7 @@ function mapConfigData(data: any, actualHost?: string): SiteConfig {
         aiSettings: data.ai_settings || { model: 'openai/gpt-4o-mini', promptTemplate: '' },
         seoSettings: data.seo_settings || {},
         expertSettings: data.expert_settings || {},
-        trustSignals: data.trust_signals || {}
+        trustSignals: data.trust_signals || {},
+        homepageContent: data.homepage_content || ""
     }
 }

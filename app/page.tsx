@@ -75,6 +75,43 @@ export default async function Home() {
         </div>
       </header>
 
+      {/* Intro Section */}
+      {siteConfig.homepageContent && siteConfig.homepageContent.replace(/<[^>]*>/g, '').trim().length > 0 && (
+        <section className="py-24 px-6 bg-white border-b border-slate-100">
+          <div className="max-w-4xl mx-auto">
+            <div className="prose prose-slate max-w-none">
+              <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-12 text-center tracking-tight">
+                Expert {niche.name} Services You Can Trust
+              </h2>
+              <div
+                className="text-slate-600 leading-relaxed text-lg 
+                  prose-p:mb-8 prose-p:leading-8 
+                  prose-h2:text-3xl prose-h2:font-bold prose-h2:text-slate-900 prose-h2:mt-12 prose-h2:mb-6
+                  prose-h3:text-2xl prose-h3:font-bold prose-h3:text-slate-900 prose-h3:mt-10 prose-h3:mb-4
+                  prose-strong:text-slate-900 prose-strong:font-bold
+                  prose-ul:list-disc prose-ul:ml-6 prose-ul:mb-8 prose-ul:space-y-2
+                  prose-ol:list-decimal prose-ol:ml-6 prose-ol:mb-8 prose-ol:space-y-2"
+                dangerouslySetInnerHTML={{
+                  __html: replacePlaceholders(
+                    siteConfig.homepageContent
+                      .replace(/```html/g, '')
+                      .replace(/```/g, '')
+                      .trim(),
+                    {
+                      niche: niche.name,
+                      service: niche.primaryService,
+                      brand: siteConfig.siteName,
+                      city: 'your area',
+                      state: 'your state'
+                    }
+                  )
+                }}
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Services Section */}
       <section className="py-20 px-6 bg-slate-50">
         <div className="max-w-6xl mx-auto">

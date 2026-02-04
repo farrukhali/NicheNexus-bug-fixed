@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { LayoutDashboard, Settings, Globe, Phone, Mail, Plus, Save, Trash2, ShieldCheck, LogOut, Wand2, Loader2, Bot } from 'lucide-react'
 import { generateNicheWithAI, DEFAULT_PROMPT } from '@/lib/ai-niche-generator'
+import RichTextEditor from '@/components/admin/RichTextEditor'
 
 const DEFAULT_SITE_CONFIG = {
     site_name: '',
@@ -34,6 +35,8 @@ const DEFAULT_SITE_CONFIG = {
         model: 'openai/gpt-4o-mini',
         promptTemplate: DEFAULT_PROMPT
     },
+    // Homepage Content
+    homepage_content: '',
     // SEO Settings
     seo_settings: {
         gtm_container_id: '',
@@ -113,6 +116,7 @@ export default function AdminDashboard() {
                 seo_settings: { ...DEFAULT_SITE_CONFIG.seo_settings, ...data.seo_settings },
                 expert_settings: { ...DEFAULT_SITE_CONFIG.expert_settings, ...data.expert_settings },
                 trust_signals: { ...DEFAULT_SITE_CONFIG.trust_signals, ...data.trust_signals },
+                homepage_content: data.homepage_content || '',
                 niche_slug: nicheSlug
             })
         } else {
@@ -220,6 +224,12 @@ export default function AdminDashboard() {
                     city_faqs: aiData.city_faqs
                 }
 
+                // Update site config with the new homepage intro
+                if (aiData.homepage_intro) {
+                    const cleanIntro = aiData.homepage_intro.replace(/```html/g, '').replace(/```/g, '').trim()
+                    setSiteConfig(prev => ({ ...prev, homepage_content: cleanIntro }))
+                }
+
                 // Save immediately
                 const normalizedSlug = updatedNiche.slug.toLowerCase().trim().replace(/\s+/g, '-')
                 const finalNiche = { ...updatedNiche, slug: normalizedSlug }
@@ -233,7 +243,8 @@ export default function AdminDashboard() {
                 const { data } = await supabase.from('niche_configs').select('*')
                 if (data) setNiches(data)
 
-                setMessage({ type: 'success', text: 'AI Generation Data Applied & Saved!' })
+                const wordCount = aiData.homepage_intro?.split(/\s+/).filter(Boolean).length || 0
+                setMessage({ type: 'success', text: `AI Generation Data Applied & Saved! (${wordCount} words generated for homepage)` })
             } else {
                 setMessage({ type: 'error', text: 'AI Generation failed. Check API Key.' })
             }
@@ -292,6 +303,64 @@ export default function AdminDashboard() {
     const handleAddFAQ = () => {
         const updatedFaqs = [...(selectedNiche.faqs || []), { question: 'New Question', answer: '' }]
         setSelectedNiche({ ...selectedNiche, faqs: updatedFaqs })
+    }
+
+    const handleGenerateHomepageContent = async () => {
+        if (!selectedNiche || !siteConfig.open_router_key) {
+            setMessage({ type: 'error', text: 'Select a niche and provide an OpenRouter API key first.' })
+            return
+        }
+        setLoading(true)
+        setMessage({ type: 'info', text: 'Generating unique homepage content...' })
+
+        try {
+            const model = siteConfig.ai_settings?.model || "openai/gpt-4o-mini"
+            const prompt = `You are an expert SEO copywriter and niche consultant. 
+            Generate a high-authority homepage introduction (300-450 words) for a company specializing in "${selectedNiche.name}".
+            
+            STRUCTURE & FLOW:
+            1. PERSUASIVE HEADING: Write one <h2> that targets the niche and {{city}}, {{state}}.
+            2. THE PROBLEM: A deep-dive <p> about কেন ${selectedNiche.name} fails specifically in {{state}}, mentioning local climate factors (humidity, freeze-thaw cycles, etc.).
+            3. THE TECHNICAL 'WHY': A <h3> and <p> using 15+ advanced technical entities (e.g. molecular bonding, hydrostatic pressure, code compliance) explaining our professional approach.
+            4. THE BRAND SOLUTION: How {{brand}} uses specific tools and high-grade materials to provide a lifelong solution in {{city}}.
+            5. EEAT FINALE: A concluding <p> about licensing, insurance, and our commitment to {{state}} homeowners.
+            
+            STRICT RULES:
+            - Use ONLY HTML: <h2>, <h3>, <p>, <strong>.
+            - NO generic placeholders like "Your Company Name". Use ONLY {{brand}}, {{city}}, {{state}}.
+            - Tone: Sophisticated, Technical, Reassuring.
+            
+            Output ONLY the raw HTML.`
+
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${siteConfig.open_router_key}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7
+                })
+            });
+
+            const data = await response.json();
+            const content = data.choices?.[0]?.message?.content;
+
+            if (content) {
+                const cleanContent = content.replace(/```html/g, '').replace(/```/g, '').trim()
+                const wordCount = cleanContent.split(/\s+/).filter(Boolean).length
+                setSiteConfig({ ...siteConfig, homepage_content: cleanContent })
+                setMessage({ type: 'success', text: `Homepage content generated! (${wordCount} words)` })
+            } else {
+                throw new Error('No content returned from AI')
+            }
+        } catch (e: any) {
+            setMessage({ type: 'error', text: 'Error: ' + e.message })
+        }
+        setLoading(false)
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000)
     }
 
 
@@ -473,6 +542,29 @@ export default function AdminDashboard() {
                                             {niches.map(n => <option key={n.slug} value={n.slug}>{n.name}</option>)}
                                         </select>
                                         <p className="mt-1 text-[10px] text-slate-500 italic">Important: Select your niche here and click "Save Site Settings" to activate it on the website.</p>
+                                    </div>
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <label className="block text-sm font-bold text-slate-900">Homepage Intro Content</label>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold transition-all ${(siteConfig.homepage_content?.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length || 0) > 250 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {siteConfig.homepage_content?.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length || 0} words
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={handleGenerateHomepageContent}
+                                                disabled={loading}
+                                                className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-bold"
+                                            >
+                                                <Bot size={14} /> AI Generate Intro
+                                            </button>
+                                        </div>
+                                        <RichTextEditor
+                                            value={siteConfig.homepage_content || ''}
+                                            onChange={(val) => setSiteConfig({ ...siteConfig, homepage_content: val })}
+                                            placeholder="Introduce your business and niche here. 3-5 paragraphs recommended for SEO."
+                                        />
+                                        <p className="mt-2 text-[10px] text-slate-400">This content appears on the main homepage. Unique, helpful content here is vital for ranking.</p>
                                     </div>
                                 </div>
                             </section>
