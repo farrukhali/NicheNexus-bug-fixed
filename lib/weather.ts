@@ -6,10 +6,75 @@ export interface WeatherData {
     windSpeed: number;
 }
 
-export async function getWeatherData(lat: number, lng: number): Promise<WeatherData | null> {
+export async function getCityCoordinates(city: string, stateCode?: string): Promise<{ lat: number, lng: number } | null> {
     try {
+        console.log(`Geocoding attempt for: ${city}, ${stateCode}`)
+        // 1. Try exact search
+        let response = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=10&language=en&format=json`,
+            { next: { revalidate: 86400 } }
+        );
+
+        let data = await response.json();
+
+        // 2. Fallback: If no results and city has a hyphen/space (e.g. "Millis-Clicquot"), try first part "Millis"
+        if ((!data.results || data.results.length === 0) && (city.includes('-') || city.includes(' '))) {
+            const simpleCity = city.split(/[- ]/)[0]; // Take "Millis" from "Millis-Clicquot"
+            console.log(`Geocoding fallback search: ${simpleCity}`);
+            response = await fetch(
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(simpleCity)}&count=10&language=en&format=json`,
+                { next: { revalidate: 86400 } }
+            );
+            data = await response.json();
+        }
+
+        if (!data.results || data.results.length === 0) {
+            console.warn(`Geocoding failed for ${city}`);
+            return null;
+        }
+
+        // 3. Filter by State (US Logic)
+        let match = data.results[0]; // Default to first result
+
+        if (stateCode) {
+            // Try to find a result that matches the state code or state name
+            const stateMatch = data.results.find((r: any) =>
+                (r.admin1_code && r.admin1_code.toLowerCase() === stateCode.toLowerCase()) ||
+                (r.admin1 && r.admin1.toLowerCase().includes(stateCode.toLowerCase()))
+            );
+
+            if (stateMatch) {
+                match = stateMatch;
+            } else {
+                console.log(`No state match found for ${stateCode} in results. Using first result: ${match.name}, ${match.admin1}`);
+            }
+        }
+
+        return { lat: match.latitude, lng: match.longitude };
+    } catch (error) {
+        console.error('Error fetching coordinates:', error);
+        return null;
+    }
+}
+
+export async function getWeatherData(lat: number | undefined, lng: number | undefined, cityFallback?: string, stateFallback?: string): Promise<WeatherData | null> {
+    try {
+        let finalLat = lat;
+        let finalLng = lng;
+
+        // Fallback to geocoding if coords are missing but city is provided
+        if ((!finalLat || !finalLng) && cityFallback) {
+            const coords = await getCityCoordinates(cityFallback, stateFallback);
+            if (coords) {
+                finalLat = coords.lat;
+                finalLng = coords.lng;
+            }
+        }
+
+        if (!finalLat || !finalLng) return null;
+
         const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`,
+            `https://api.open-meteo.com/v1/forecast?latitude=${finalLat}&longitude=${finalLng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`,
             { next: { revalidate: 3600 } } // Cache for 1 hour
         );
 
