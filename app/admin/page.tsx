@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { LayoutDashboard, Settings, Globe, Phone, Mail, Plus, Save, Trash2, ShieldCheck, LogOut, Wand2, Loader2, Bot } from 'lucide-react'
+import { LayoutDashboard, Settings, Globe, Phone, Mail, Plus, Save, Trash2, ShieldCheck, LogOut, Wand2, Loader2, Bot, X } from 'lucide-react'
 import { generateNicheWithAI, DEFAULT_PROMPT } from '@/lib/ai-niche-generator'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+import { CldUploadWidget } from 'next-cloudinary'
+
 
 const DEFAULT_SITE_CONFIG = {
     site_name: '',
@@ -808,16 +810,51 @@ export default function AdminDashboard() {
                                     🎨 Branding
                                 </h3>
                                 <div className="grid sm:grid-cols-2 gap-4">
-                                    <div>
+                                    <div className="space-y-2">
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL</label>
-                                        <input
-                                            type="url"
-                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="https://example.com/logo.png"
-                                            value={siteConfig.logo_url}
-                                            onChange={(e) => setSiteConfig({ ...siteConfig, logo_url: e.target.value })}
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="url"
+                                                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="https://example.com/logo.png"
+                                                value={siteConfig.logo_url}
+                                                onChange={(e) => setSiteConfig({ ...siteConfig, logo_url: e.target.value })}
+                                            />
+                                            <CldUploadWidget
+                                                signatureEndpoint="/api/cloudinary-signature"
+                                                uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                                                onSuccess={(result: any) => {
+                                                    console.log('Logo Upload Result:', result);
+                                                    if (result?.info?.secure_url) {
+                                                        setSiteConfig({ ...siteConfig, logo_url: result.info.secure_url })
+                                                    }
+                                                }}
+
+                                            >
+                                                {({ open }) => (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => open()}
+                                                        className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all text-sm font-bold flex items-center gap-2"
+                                                    >
+                                                        <Plus size={16} /> Upload
+                                                    </button>
+                                                )}
+                                            </CldUploadWidget>
+                                        </div>
+                                        {siteConfig.logo_url && (
+                                            <div className="mt-2 relative w-32 h-12 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                                                <img src={siteConfig.logo_url} alt="Logo Preview" className="w-full h-full object-contain" />
+                                                <button
+                                                    onClick={() => setSiteConfig({ ...siteConfig, logo_url: '' })}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-sm"
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Footer Tagline</label>
                                         <input
@@ -1197,42 +1234,107 @@ export default function AdminDashboard() {
                         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
                             <h3 className="text-xl font-bold">Assets & Sitemap</h3>
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div>
+                                <div className="space-y-2">
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
                                         OG Image URL
                                     </label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="https://example.com/og-image.png"
-                                        value={siteConfig.seo_settings?.og_image_url || ''}
-                                        onChange={(e) => setSiteConfig({
-                                            ...siteConfig,
-                                            seo_settings: {
-                                                ...siteConfig.seo_settings,
-                                                og_image_url: e.target.value
-                                            }
-                                        })}
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="https://example.com/og-image.png"
+                                            value={siteConfig.seo_settings?.og_image_url || ''}
+                                            onChange={(e) => setSiteConfig({
+                                                ...siteConfig,
+                                                seo_settings: {
+                                                    ...siteConfig.seo_settings,
+                                                    og_image_url: e.target.value
+                                                }
+                                            })}
+                                        />
+                                        <CldUploadWidget
+                                            signatureEndpoint="/api/cloudinary-signature"
+                                            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                                            onSuccess={(result: any) => {
+                                                if (result?.info?.secure_url) {
+                                                    setSiteConfig({
+                                                        ...siteConfig,
+                                                        seo_settings: {
+                                                            ...siteConfig.seo_settings,
+                                                            og_image_url: result.info.secure_url
+                                                        }
+                                                    })
+                                                }
+                                            }}
+                                        >
+                                            {({ open }) => (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => open()}
+                                                    className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all text-sm font-bold flex items-center gap-2"
+                                                >
+                                                    <Plus size={16} /> Upload
+                                                </button>
+                                            )}
+                                        </CldUploadWidget>
+                                    </div>
+                                    {siteConfig.seo_settings?.og_image_url && (
+                                        <div className="mt-2 relative w-48 h-24 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                                            <img src={siteConfig.seo_settings.og_image_url} alt="OG Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
                                 </div>
-                                <div>
+                                <div className="space-y-2">
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Favicon URL
                                     </label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="https://example.com/favicon.ico"
-                                        value={siteConfig.seo_settings?.favicon_url || ''}
-                                        onChange={(e) => setSiteConfig({
-                                            ...siteConfig,
-                                            seo_settings: {
-                                                ...siteConfig.seo_settings,
-                                                favicon_url: e.target.value
-                                            }
-                                        })}
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="https://example.com/favicon.ico"
+                                            value={siteConfig.seo_settings?.favicon_url || ''}
+                                            onChange={(e) => setSiteConfig({
+                                                ...siteConfig,
+                                                seo_settings: {
+                                                    ...siteConfig.seo_settings,
+                                                    favicon_url: e.target.value
+                                                }
+                                            })}
+                                        />
+                                        <CldUploadWidget
+                                            signatureEndpoint="/api/cloudinary-signature"
+                                            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                                            onSuccess={(result: any) => {
+                                                if (result?.info?.secure_url) {
+                                                    setSiteConfig({
+                                                        ...siteConfig,
+                                                        seo_settings: {
+                                                            ...siteConfig.seo_settings,
+                                                            favicon_url: result.info.secure_url
+                                                        }
+                                                    })
+                                                }
+                                            }}
+                                        >
+                                            {({ open }) => (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => open()}
+                                                    className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all text-sm font-bold flex items-center gap-2"
+                                                >
+                                                    <Plus size={16} /> Upload
+                                                </button>
+                                            )}
+                                        </CldUploadWidget>
+                                    </div>
+                                    {siteConfig.seo_settings?.favicon_url && (
+                                        <div className="mt-2 relative w-8 h-8 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                                            <img src={siteConfig.seo_settings.favicon_url} alt="Favicon Preview" className="w-full h-full object-contain" />
+                                        </div>
+                                    )}
                                 </div>
+
                             </div>
                         </div>
 
@@ -1307,24 +1409,69 @@ export default function AdminDashboard() {
                                         })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
                                         Photo URL
                                     </label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="https://example.com/expert.jpg"
-                                        value={siteConfig.expert_settings?.photo_url || ''}
-                                        onChange={(e) => setSiteConfig({
-                                            ...siteConfig,
-                                            expert_settings: {
-                                                ...siteConfig.expert_settings,
-                                                photo_url: e.target.value
-                                            }
-                                        })}
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="https://example.com/expert.jpg"
+                                            value={siteConfig.expert_settings?.photo_url || ''}
+                                            onChange={(e) => setSiteConfig({
+                                                ...siteConfig,
+                                                expert_settings: {
+                                                    ...siteConfig.expert_settings,
+                                                    photo_url: e.target.value
+                                                }
+                                            })}
+                                        />
+                                        <CldUploadWidget
+                                            signatureEndpoint="/api/cloudinary-signature"
+                                            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                                            onSuccess={(result: any) => {
+                                                if (result?.info?.secure_url) {
+                                                    setSiteConfig({
+                                                        ...siteConfig,
+                                                        expert_settings: {
+                                                            ...siteConfig.expert_settings,
+                                                            photo_url: result.info.secure_url
+                                                        }
+                                                    })
+                                                }
+                                            }}
+                                        >
+                                            {({ open }) => (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => open()}
+                                                    className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all text-sm font-bold flex items-center gap-2"
+                                                >
+                                                    <Plus size={16} /> Upload
+                                                </button>
+                                            )}
+                                        </CldUploadWidget>
+                                    </div>
+                                    {siteConfig.expert_settings?.photo_url && (
+                                        <div className="mt-2 relative w-20 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                                            <img src={siteConfig.expert_settings.photo_url} alt="Expert Preview" className="w-full h-full object-cover" />
+                                            <button
+                                                onClick={() => setSiteConfig({
+                                                    ...siteConfig,
+                                                    expert_settings: {
+                                                        ...siteConfig.expert_settings,
+                                                        photo_url: ''
+                                                    }
+                                                })}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-sm"
+                                            >
+                                                <X size={10} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
+
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
                                         License Number
@@ -1580,17 +1727,49 @@ export default function AdminDashboard() {
                                                 onChange={(e) => setSelectedNiche({ ...selectedNiche, primary_service: e.target.value })}
                                             />
                                         </div>
-                                        <div>
+                                        <div className="space-y-2">
                                             <label className="block text-sm font-medium text-slate-700 mb-1">City Hero Image URL</label>
-                                            <input
-                                                type="text"
-                                                placeholder="https://i.ibb.co/Z6Wgrtzs/Premium-Gutter-Installation.png"
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={selectedNiche.city_hero_image || 'https://i.ibb.co/Z6Wgrtzs/Premium-Gutter-Installation.png'}
-                                                onChange={(e) => setSelectedNiche({ ...selectedNiche, city_hero_image: e.target.value })}
-                                            />
-                                            <p className="text-xs text-slate-500 mt-1">This image will appear on all city pages (right side of hero section)</p>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="https://i.ibb.co/Z6Wgrtzs/Premium-Gutter-Installation.png"
+                                                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                                    value={selectedNiche.city_hero_image || 'https://i.ibb.co/Z6Wgrtzs/Premium-Gutter-Installation.png'}
+                                                    onChange={(e) => setSelectedNiche({ ...selectedNiche, city_hero_image: e.target.value })}
+                                                />
+                                                <CldUploadWidget
+                                                    signatureEndpoint="/api/cloudinary-signature"
+                                                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                                                    onSuccess={(result: any) => {
+                                                        if (result?.info?.secure_url) {
+                                                            setSelectedNiche({ ...selectedNiche, city_hero_image: result.info.secure_url })
+                                                        }
+                                                    }}
+                                                >
+                                                    {({ open }) => (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => open()}
+                                                            className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all text-sm font-bold flex items-center gap-2"
+                                                        >
+                                                            <Plus size={16} /> Upload
+                                                        </button>
+                                                    )}
+                                                </CldUploadWidget>
+                                            </div>
+                                            {selectedNiche.city_hero_image && (
+                                                <div className="mt-2 relative w-48 h-24 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                                                    <img src={selectedNiche.city_hero_image} alt="Hero Preview" className="w-full h-full object-cover" />
+                                                    <button
+                                                        onClick={() => setSelectedNiche({ ...selectedNiche, city_hero_image: '' })}
+                                                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-sm"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
+
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Keywords (Comma separated)</label>
                                             <textarea
@@ -1825,17 +2004,48 @@ export default function AdminDashboard() {
                                                             setSelectedNiche({ ...selectedNiche, services: newServices })
                                                         }}
                                                     />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Hero Image URL (e.g. Unsplash URL)"
-                                                        className="w-full px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono"
-                                                        value={service.heroImage || service.hero_image || ''}
-                                                        onChange={(e) => {
-                                                            const newServices = [...selectedNiche.services]
-                                                            newServices[index].heroImage = e.target.value
-                                                            setSelectedNiche({ ...selectedNiche, services: newServices })
-                                                        }}
-                                                    />
+                                                    <div className="space-y-2">
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Hero Image URL (e.g. Unsplash URL)"
+                                                                className="flex-1 px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono"
+                                                                value={service.heroImage || service.hero_image || ''}
+                                                                onChange={(e) => {
+                                                                    const newServices = [...selectedNiche.services]
+                                                                    newServices[index].heroImage = e.target.value
+                                                                    setSelectedNiche({ ...selectedNiche, services: newServices })
+                                                                }}
+                                                            />
+                                                            <CldUploadWidget
+                                                                signatureEndpoint="/api/cloudinary-signature"
+                                                                uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                                                                onSuccess={(result: any) => {
+                                                                    if (result?.info?.secure_url) {
+                                                                        const newServices = [...selectedNiche.services]
+                                                                        newServices[index].heroImage = result.info.secure_url
+                                                                        setSelectedNiche({ ...selectedNiche, services: newServices })
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {({ open }) => (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => open()}
+                                                                        className="px-2 py-1 bg-slate-200 text-slate-800 rounded hover:bg-slate-300 transition-all text-[10px] font-bold"
+                                                                    >
+                                                                        Upload
+                                                                    </button>
+                                                                )}
+                                                            </CldUploadWidget>
+                                                        </div>
+                                                        {(service.heroImage || service.hero_image) && (
+                                                            <div className="relative w-20 h-12 bg-slate-100 rounded overflow-hidden border border-slate-200">
+                                                                <img src={service.heroImage || service.hero_image} alt="Service Preview" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
                                                     <textarea
                                                         placeholder="Short Description"
                                                         className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs h-16"

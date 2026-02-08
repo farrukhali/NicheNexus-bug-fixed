@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import RelatedServices from '@/components/RelatedServices'
 import TrustBadges from '@/components/TrustBadges'
@@ -13,6 +14,8 @@ import { replacePlaceholders, replacePlaceholdersInArray, replacePlaceholdersInM
 import { getWeatherData } from '@/lib/weather'
 import WeatherWidget from '@/components/WeatherWidget'
 import LocalBusinessSchema from '@/components/seo/LocalBusinessSchema'
+import { getNeighborhoods } from '@/lib/data-fetching'
+import NeighborhoodSection from '@/components/NeighborhoodSection'
 import LocalReviews from '@/components/LocalReviews'
 
 interface ServiceSpecificPageProps {
@@ -45,6 +48,9 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
 
     // Fetch local weather
     const weather = (latitude && longitude) ? await getWeatherData(latitude, longitude) : null
+
+    // Fetch neighborhood data
+    const neighborhoodData = await getNeighborhoods(formattedCity, stateCode)
 
     // Get dynamic content from the service prop (fetched from DB)
     const extendedContent = {
@@ -138,22 +144,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-            {/* Navigation */}
-            <nav className="fixed w-full z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-cyan-500">
-                        {siteConfig.siteName}
-                    </Link>
-                    <div className="flex items-center gap-6">
-                        <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
-                            <Link href="/" className="hover:text-blue-600 transition-colors">Locations</Link>
-                            <Link href="/about" className="hover:text-blue-600 transition-colors">About</Link>
-                            <Link href="/contact" className="hover:text-blue-600 transition-colors">Contact</Link>
-                        </div>
-                        <NavbarCallBtn />
-                    </div>
-                </div>
-            </nav>
+            <Navbar siteConfig={siteConfig} />
 
             {/* Hero Section */}
             <header className="relative pt-32 pb-24 px-6 overflow-hidden">
@@ -331,10 +322,6 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                             </li>
                             <li className="flex items-center gap-3 text-slate-700">
                                 <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center">✓</span>
-                                Same-day or next-day quotes available
-                            </li>
-                            <li className="flex items-center gap-3 text-slate-700">
-                                <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center">✓</span>
                                 Top Rated in {stateCode}
                             </li>
                         </ul>
@@ -344,6 +331,11 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                     </div>
                 </div>
             </section>
+
+            {/* Neighborhoods Section */}
+            {neighborhoodData && (
+                <NeighborhoodSection data={neighborhoodData} />
+            )}
 
             <LocalReviews
                 city={formattedCity}

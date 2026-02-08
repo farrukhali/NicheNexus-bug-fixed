@@ -22,6 +22,7 @@ import { getSiteConfig } from '@/lib/site-config'
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
     const params = await props.params
     const { state, city } = params
+    const siteConfig = await getSiteConfig()
 
     // Fetch data for accurate State Name
     const cityData = await getCityData(state, city)
@@ -43,12 +44,13 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
         description: seo.metaDescription,
         keywords: `${(seo.metaKeywords || []).join(', ')}, ${formattedCity}, ${stateCode}`,
         alternates: {
-            canonical: `https://${(await getSiteConfig()).domain}/${state.toLowerCase()}/${city.toLowerCase()}`
+            canonical: `https://${siteConfig.domain}/${state.toLowerCase()}/${city.toLowerCase()}`
         },
         openGraph: {
             title: seo.metaTitle,
             description: seo.metaDescription,
-            url: `https://${(await getSiteConfig()).domain}/${state}/${city}`,
+            url: `https://${siteConfig.domain}/${state}/${city}`,
+            images: siteConfig.seoSettings?.og_image_url ? [siteConfig.seoSettings.og_image_url] : [],
         }
     }
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { getSiteConfig } from '@/lib/site-config'
 import { getNicheConfig } from '@/lib/niche-configs'
@@ -25,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: seo.metaDescription,
       url: `https://${siteConfig.domain}`,
       type: 'website',
+      images: siteConfig.seoSettings?.og_image_url ? [siteConfig.seoSettings.og_image_url] : [],
     }
   }
 }
@@ -51,8 +53,9 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-500 selection:text-white">
 
-      {/* Hero Section */}
       <header className="relative py-32 px-6 bg-slate-900 overflow-hidden">
+        <Navbar siteConfig={siteConfig} />
+
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900 via-slate-900 to-black opacity-95"></div>
         </div>

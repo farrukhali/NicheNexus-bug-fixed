@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumb from '@/components/Breadcrumb'
 import TrustBadges from '@/components/TrustBadges'
@@ -69,7 +70,8 @@ export async function generateMetadata(props: StatePageProps): Promise<Metadata>
             title: seo.metaTitle,
             description: seo.metaDescription,
             url: `https://${siteConfig.domain}/${params.state.toLowerCase()}`,
-            type: 'website'
+            type: 'website',
+            images: siteConfig.seoSettings?.og_image_url ? [siteConfig.seoSettings.og_image_url] : [],
         }
     }
 }
@@ -118,21 +120,8 @@ export default async function StatePage(props: StatePageProps) {
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-500 selection:text-white flex flex-col">
             {/* Header / Hero */}
             <header className="relative py-24 px-6 overflow-hidden bg-slate-900">
-                <nav className="fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
-                    <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                        <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-cyan-500">
-                            {siteConfig.siteName}
-                        </Link>
-                        <div className="flex items-center gap-6">
-                            <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
-                                <Link href="/" className="hover:text-blue-600 transition-colors">Locations</Link>
-                                <Link href="/about" className="hover:text-blue-600 transition-colors">About</Link>
-                                <Link href="/contact" className="hover:text-blue-600 transition-colors">Contact</Link>
-                            </div>
-                            <NavbarCallBtn />
-                        </div>
-                    </div>
-                </nav>
+                <Navbar siteConfig={siteConfig} />
+
                 <div className="absolute inset-0 z-0">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900 via-slate-900 to-black opacity-95"></div>
                     <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>

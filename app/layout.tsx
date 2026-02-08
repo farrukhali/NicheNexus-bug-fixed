@@ -63,7 +63,7 @@ export default async function RootLayout({
         <JsonLdSchema type="Organization" data={{
           name: siteConfig.siteName,
           url: siteConfig.domain,
-          logo: `${siteConfig.domain}/logo.png`,
+          logo: siteConfig.logoUrl || `${siteConfig.domain}/logo.png`,
           contactPoint: {
             telephone: siteConfig.contactPhone,
             contactType: "customer service"

@@ -38,6 +38,12 @@ export async function generateMetadata(props: StartServicePageProps): Promise<Me
         description: seo.metaDescription,
         alternates: {
             canonical: `https://${siteConfig.domain}/${state.toLowerCase()}/${city.toLowerCase()}/${service}`
+        },
+        openGraph: {
+            title: seo.metaTitle,
+            description: seo.metaDescription,
+            url: `https://${siteConfig.domain}/${state.toLowerCase()}/${city.toLowerCase()}/${service}`,
+            images: siteConfig.seoSettings?.og_image_url ? [siteConfig.seoSettings.og_image_url] : [],
         }
     }
 }

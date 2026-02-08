@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Footer from '@/components/Footer'
+import Navbar from '@/components/Navbar'
 import { NavbarCallBtn, CallBtn } from '@/components/CallBtn'
 import TrustBadges from '@/components/TrustBadges'
 import { getSiteConfig } from '@/lib/site-config'
@@ -58,14 +59,7 @@ export default async function ContactPage() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
             />
 
-            <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-cyan-500">
-                        {siteConfig.siteName}
-                    </Link>
-                    <NavbarCallBtn />
-                </div>
-            </nav>
+            <Navbar siteConfig={siteConfig} />
 
             <main className="pt-32 pb-24 px-6">
                 <div className="max-w-4xl mx-auto">

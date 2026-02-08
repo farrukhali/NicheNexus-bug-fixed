@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { getSEOContent } from '@/lib/seo-content'
 import RelatedServices from '@/components/RelatedServices'
@@ -17,6 +18,8 @@ import JsonLdSchema from '@/components/seo/JsonLdSchema'
 import LocalBusinessSchema from '@/components/seo/LocalBusinessSchema'
 import { replacePlaceholders } from '@/lib/seo-utils'
 import { getWeatherData } from '@/lib/weather'
+import { getNeighborhoods } from '@/lib/data-fetching'
+import NeighborhoodSection from '@/components/NeighborhoodSection'
 import WeatherWidget from '@/components/WeatherWidget'
 import LocalReviews from '@/components/LocalReviews'
 import RecentActivity from '@/components/RecentActivity'
@@ -56,6 +59,9 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
         niche: niche.name
     }
 
+    // Fetch neighborhood data
+    const neighborhoodData = await getNeighborhoods(formattedCity, stateCode)
+
     if (customIntro) {
         content.intro = replacePlaceholders(customIntro, placeholderVars)
     }
@@ -74,21 +80,8 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
             />
 
             {/* Navigation */}
-            <nav className="fixed w-full z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-cyan-500">
-                        {siteConfig.siteName}
-                    </Link>
-                    <div className="flex items-center gap-6">
-                        <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
-                            <Link href="/" className="hover:text-blue-600 transition-colors">Locations</Link>
-                            <Link href="/about" className="hover:text-blue-600 transition-colors">About</Link>
-                            <Link href="/contact" className="hover:text-blue-600 transition-colors">Contact</Link>
-                        </div>
-                        <NavbarCallBtn />
-                    </div>
-                </div>
-            </nav>
+            <Navbar siteConfig={siteConfig} />
+
 
             {/* Hero Section */}
             <header className="relative pt-32 pb-24 px-6 overflow-hidden">
@@ -244,6 +237,11 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                     </div>
                 </div>
             </section>
+
+            {/* Neighborhoods Section */}
+            {neighborhoodData && (
+                <NeighborhoodSection data={neighborhoodData} />
+            )}
 
 
             {/* Local Content Section */}

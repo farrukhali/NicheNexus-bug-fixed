@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Footer from '@/components/Footer'
+import Navbar from '@/components/Navbar'
 import { NavbarCallBtn } from '@/components/CallBtn'
 import TrustBadges from '@/components/TrustBadges'
 import { getSiteConfig } from '@/lib/site-config'
@@ -60,19 +61,7 @@ export default async function AboutPage() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
             />
 
-            <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-cyan-500">
-                        {siteConfig.siteName}
-                    </Link>
-                    <div className="flex items-center gap-6">
-                        <Link href="/" className="hidden md:block text-sm font-medium text-slate-600 hover:text-blue-600">
-                            Back to Home
-                        </Link>
-                        <NavbarCallBtn />
-                    </div>
-                </div>
-            </nav>
+            <Navbar siteConfig={siteConfig} />
 
             <main className="pt-32 pb-24 px-6">
                 <div className="max-w-4xl mx-auto">
