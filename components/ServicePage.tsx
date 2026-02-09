@@ -55,8 +55,10 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
         city: formattedCity,
         state: formattedState,
         stateCode: stateCode,
-        niche: niche.name
+        niche: replacePlaceholders(niche.name, { city: formattedCity, state: formattedState, stateCode })
     }
+
+    const resolvedPrimaryService = replacePlaceholders(niche.primaryService, placeholderVars)
 
     // Fetch neighborhood data
     const neighborhoodData = await getNeighborhoods(formattedCity, stateCode)
@@ -74,7 +76,7 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                 zipCodes={zipCodes}
                 latitude={latitude}
                 longitude={longitude}
-                serviceName={niche.primaryService}
+                serviceName={resolvedPrimaryService}
                 siteConfig={siteConfig}
             />
 

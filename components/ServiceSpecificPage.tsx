@@ -53,6 +53,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
 
     // Get dynamic content from the service prop (fetched from DB)
     const extendedContent = {
+        title: replacePlaceholders(service.title, placeholderVars),
         whatIs: replacePlaceholders(service.description(formattedCity, formattedState), placeholderVars),
         process: replacePlaceholdersInArray(service.process || [], placeholderVars),
         materials: replacePlaceholdersInMaterials(service.materials || [], placeholderVars),
@@ -79,8 +80,8 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
     const serviceSchema = {
         "@context": "https://schema.org",
         "@type": "Service",
-        "name": `${service.title} in ${formattedCity}, ${stateCode}`,
-        "description": service.description(formattedCity, formattedState),
+        "name": `${extendedContent.title} in ${formattedCity}, ${stateCode}`,
+        "description": extendedContent.whatIs,
         "provider": {
             "@type": "HomeAndConstructionBusiness",
             "name": siteConfig.siteName,
@@ -102,7 +103,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                 "name": formattedState
             }
         },
-        "serviceType": service.title,
+        "serviceType": extendedContent.title,
         "offers": {
             "@type": "Offer",
             "priceSpecification": {
@@ -129,6 +130,27 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
         }))
     }
 
+    const howToSchema = extendedContent.process.length > 0 ? {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": `Professional ${extendedContent.title} Process in ${formattedCity}`,
+        "description": `Detailed step-by-step guide on how our local experts perform ${extendedContent.title.toLowerCase()} for ${formattedCity} residents.`,
+        "totalTime": "PT4H", // Default estimation
+        "supply": extendedContent.materials.map((m: any) => ({
+            "@type": "HowToSupply",
+            "name": m.name
+        })),
+        "step": extendedContent.process.map((step: string, index: number) => ({
+            "@type": "HowToStep",
+            "position": index + 1,
+            "name": step.split(':')[0] || `Step ${index + 1}`,
+            "itemListElement": [{
+                "@type": "HowToDirection",
+                "text": step
+            }]
+        }))
+    } : null;
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-500 selection:text-white">
 
@@ -139,11 +161,14 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                 stateCode={stateCode}
                 latitude={latitude}
                 longitude={longitude}
-                serviceName={service.title}
+                serviceName={extendedContent.title}
                 siteConfig={siteConfig}
             />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+            {howToSchema && (
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
+            )}
 
             <Navbar siteConfig={siteConfig} />
 
@@ -157,13 +182,13 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                 <div className="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
                     <div className="text-center lg:text-left">
                         <div className="inline-block px-4 py-1.5 mb-6 rounded-full border border-blue-400/30 bg-blue-500/10 backdrop-blur-sm text-blue-300 text-sm font-semibold uppercase tracking-wider">
-                            {service.title} in {stateCode.toUpperCase()}
+                            {extendedContent.title} in {stateCode.toUpperCase()}
                         </div>
                         <h1 className="text-4xl md:text-[3.5rem] font-extrabold text-white mb-6 leading-tight tracking-tight">
-                            {h1Title || `${service.title} in ${formattedCity}, ${stateCode.toUpperCase()}`}
+                            {h1Title || `${extendedContent.title} in ${formattedCity}, ${stateCode.toUpperCase()}`}
                         </h1>
                         <p className="text-xl text-slate-300 mb-8 font-light">
-                            {replacePlaceholders(service.description(formattedCity, formattedState), placeholderVars)}
+                            {extendedContent.whatIs}
                         </p>
 
                         {/* Quick Info Pills */}
@@ -193,7 +218,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                                         <div className="absolute inset-0 bg-blue-500 mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                                         <img
                                             src={niche.cityHeroImage}
-                                            alt={`${service.title} in ${formattedCity}`}
+                                            alt={`${extendedContent.title} in ${formattedCity}`}
                                             className="w-full h-full object-contain bg-slate-900"
                                         />
                                     </div>
@@ -210,14 +235,14 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <Breadcrumb items={[
                 { label: state, href: `/${stateCode}` },
                 { label: formattedCity, href: `/${stateCode}/${city}` },
-                { label: service.title, href: `/${stateCode}/${city}/${service.slug}` }
+                { label: extendedContent.title, href: `/${stateCode}/${city}/${service.slug}` }
             ]} />
 
             {/* What Is This Service Section */}
             <section className="py-16 px-6 bg-white">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-3xl font-bold text-slate-900 mb-6">
-                        What is {service.title}?
+                        What is {extendedContent.title}?
                     </h2>
                     <p className="text-lg text-slate-600 leading-relaxed">
                         {extendedContent.whatIs}
@@ -229,7 +254,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <section className="py-16 px-6 bg-slate-50">
                 <div className="max-w-7xl mx-auto">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        Key Features of Our {service.title} in {formattedCity}
+                        Key Features of Our {extendedContent.title} in {formattedCity}
                     </h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {extendedContent.features.map((feature, i) => (
@@ -248,7 +273,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <section className="py-16 px-6 bg-white">
                 <div className="max-w-5xl mx-auto">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        Our {service.title} Process in {formattedCity}
+                        Our {extendedContent.title} Process in {formattedCity}
                     </h2>
                     <div className="space-y-6">
                         {extendedContent.process.map((step: string, i: number) => (
@@ -269,7 +294,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <section className="py-16 px-6 bg-slate-50">
                 <div className="max-w-6xl mx-auto">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        Equipment & Options for {service.title}
+                        Equipment & Options for {extendedContent.title}
                     </h2>
                     <div className="grid md:grid-cols-2 gap-6">
                         {extendedContent.materials.map((material: any, i: number) => (
@@ -286,7 +311,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <section className="py-16 px-6 bg-white">
                 <div className="max-w-7xl mx-auto">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        Benefits of Professional {service.title} in {formattedCity}
+                        Benefits of Professional {extendedContent.title} in {formattedCity}
                     </h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {extendedContent.benefits.map((benefit, i) => (
@@ -295,7 +320,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                                     {['✅', '⭐', '🏆', '💎'][i % 4]}
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900 mb-3 leading-tight">{benefit}</h3>
-                                <p className="text-sm text-slate-600 leading-relaxed">Expert {service.title.toLowerCase()} delivers this lasting value.</p>
+                                <p className="text-sm text-slate-600 leading-relaxed">Expert {extendedContent.title.toLowerCase()} delivers this lasting value.</p>
                             </div>
                         ))}
                     </div>
@@ -307,11 +332,13 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                 <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
                     <div>
                         <h2 className="text-3xl font-bold text-slate-900 mb-6">
-                            {service.title} Service Area in {formattedCity}
+                            {extendedContent.title} Service Area in {formattedCity}
                         </h2>
-                        <p className="text-lg text-slate-600 mb-6">
-                            We provide {service.title.toLowerCase()} services throughout {formattedCity} and the surrounding {stateCode.toUpperCase()} areas. Our local crews are familiar with {formattedCity}'s climate, drainage requirements, and local building codes.
-                        </p>
+                        <div className="text-slate-600 space-y-4">
+                            <p>
+                                We provide {extendedContent.title.toLowerCase()} services throughout {formattedCity} and the surrounding {stateCode.toUpperCase()} areas. Our local crews are familiar with {formattedCity}'s climate, drainage requirements, and local building codes.
+                            </p>
+                        </div>
                         <ul className="space-y-3">
                             <li className="flex items-center gap-3 text-slate-700">
                                 <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center">✓</span>
@@ -341,7 +368,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <LocalReviews
                 city={formattedCity}
                 state={formattedState}
-                serviceName={service.title}
+                serviceName={extendedContent.title}
                 siteConfig={siteConfig}
                 latitude={latitude}
             />
@@ -350,7 +377,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             <section className="py-16 px-6 bg-white">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        {service.title} FAQs for {formattedCity} Homeowners
+                        {extendedContent.title} FAQs for {formattedCity} Homeowners
                     </h2>
                     <div className="space-y-4">
                         {displayFaqs.map((faq: any, i: number) => (
@@ -371,7 +398,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
             {/* Pricing Info */}
             <section className="py-16 px-6 bg-slate-50">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-3xl font-bold mb-8">{service.title} Pricing in {formattedCity}</h2>
+                    <h2 className="text-3xl font-bold mb-8">{extendedContent.title} Pricing in {formattedCity}</h2>
                     <div className="grid md:grid-cols-3 gap-6">
                         <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
                             <div className="text-3xl mb-2">💵</div>
@@ -400,7 +427,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                 <section className="py-16 px-6 bg-white border-t border-slate-200">
                     <div className="max-w-6xl mx-auto">
                         <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">
-                            {service.title} Also Available in Nearby {stateCode.toUpperCase()} Cities
+                            {extendedContent.title} Also Available in Nearby {stateCode.toUpperCase()} Cities
                         </h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                             {relatedCities.map((cityData, i) => (
@@ -408,7 +435,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                                     key={i}
                                     href={`/${cityData.state_id.toLowerCase()}/${cityData.city.toLowerCase().replace(/ /g, '-')}/${service.slug}`}
                                     className="block p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all text-center text-slate-700 font-medium truncate"
-                                    title={`${service.title} in ${cityData.city}`}
+                                    title={`${extendedContent.title} in ${cityData.city}`}
                                 >
                                     {cityData.city}
                                 </Link>
@@ -423,7 +450,7 @@ export default async function ServiceSpecificPage({ city, state, stateCode, serv
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
                 <div className="max-w-4xl mx-auto text-center relative z-10">
                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                        Ready for {service.title} in {formattedCity}?
+                        Ready for {extendedContent.title} in {formattedCity}?
                     </h2>
                     <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">
                         Get a free, no-obligation quote from our local {formattedCity} experts. We respond within 24 hours with transparent pricing.
