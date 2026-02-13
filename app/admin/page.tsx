@@ -496,36 +496,66 @@ export default function AdminDashboard() {
         setMessage({ type: 'info', text: 'Generating unique homepage content...' })
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+
             const model = siteConfig.ai_settings?.model || "openai/gpt-4o-mini"
-            const prompt = `You are an expert SEO copywriter and niche consultant. 
-            Generate a high-authority homepage introduction (300-450 words) for a company specializing in "${selectedNiche.name}".
+            const prompt = `You are a Semantic SEO Strategist and Master Copywriter. 
+            Your goal is to generate high-authority, semantic-rich homepage content (400-600 words) for a "${selectedNiche.name}" business.
             
-            STRUCTURE & FLOW:
-            1. PERSUASIVE HEADING: Write one <h2> that targets the niche and {{city}}, {{state}}.
-            2. THE PROBLEM: A deep-dive <p> about কেন ${selectedNiche.name} fails specifically in {{state}}, mentioning local climate factors (humidity, freeze-thaw cycles, etc.).
-            3. THE TECHNICAL 'WHY': A <h3> and <p> using 15+ advanced technical entities (e.g. molecular bonding, hydrostatic pressure, code compliance) explaining our professional approach.
-            4. THE BRAND SOLUTION: How {{brand}} uses specific tools and high-grade materials to provide a lifelong solution in {{city}}.
-            5. EEAT FINALE: A concluding <p> about licensing, insurance, and our commitment to {{state}} homeowners.
+            SEMANTIC STRATEGY:
+            - Focus on Topical Authority: Cover not just the service, but the underlying expertise, materials, and long-term value.
+            - Intent Matching: Address common homeowner pain points and technical anxieties.
+            - LSI Integration: Naturally weave in related semantic terms (e.g., durability, precision, compliance, specialized equipment).
+            
+            STRUCTURE & HIERARCHY:
+            1. MAIN H1: An authoritative, keyword-rich <h1> that includes {{niche}} and {{city}}.
+            2. TOPICAL INTRODUCTION: A compelling <p> about the importance of professional ${selectedNiche.name} in {{state}}.
+            3. SECONDARY H2: Focus on "Professional Grade Solutions" in {{city}}.
+            4. PROBLEM/SOLUTION SECTION: A deep-dive <p> about regional challenges (climate, local regulations) and how {{brand}} solves them.
+            5. TECHNICAL H3: Sub-heading for specific technical advantages or methodology.
+            6. SEMANTIC KEY FEATURES: A <ul> with 3-5 <li> items explaining core benefits using high-value industry terms.
+            7. TRUST & EEAT: A final <h3> and <p> emphasizing licensing, insurance, and localized expertise in {{state}}.
             
             STRICT RULES:
-            - Use ONLY HTML: <h2>, <h3>, <p>, <strong>.
-            - NO generic placeholders like "Your Company Name". Use ONLY {{brand}}, {{city}}, {{state}}.
-            - Tone: Sophisticated, Technical, Reassuring.
+            - Use HTML tags: <h1>, <h2>, <h3>, <p>, <ul>, <li>, <strong>.
+            - Use ONLY these placeholders: {{brand}}, {{city}}, {{state}}, {{niche}}, {{service}}.
+            - Tone: Authoritative, Sophisticated, and Trust-Driven.
+            - Content must be unique, high-value, and naturally optimized for search engines.
             
             Output ONLY the raw HTML.`
+
+            console.log("Attempting AI Fetch with Model:", model);
+            console.log("Using API Key (partial):", siteConfig.open_router_key?.slice(0, 10) + "...");
 
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${siteConfig.open_router_key}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://nichenexus-admin.com",
+                    "X-Title": "NicheNexus Admin Dashboard"
                 },
                 body: JSON.stringify({
                     model: model,
                     messages: [{ role: "user", content: prompt }],
                     temperature: 0.7
-                })
+                }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
+            console.log("Fetch response received. Status:", response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("OpenRouter API Error:", {
+                    status: response.status,
+                    statusText: response.statusText,
+                    error: errorText
+                });
+                throw new Error(`AI Service Error (${response.status}): ${errorText.slice(0, 100)}...`);
+            }
 
             const data = await response.json();
             const content = data.choices?.[0]?.message?.content;
@@ -536,13 +566,15 @@ export default function AdminDashboard() {
                 setSiteConfig({ ...siteConfig, homepage_content: cleanContent })
                 setMessage({ type: 'success', text: `Homepage content generated! (${wordCount} words)` })
             } else {
-                throw new Error('No content returned from AI')
+                console.error("Empty content from AI response:", data);
+                throw new Error('No content returned from AI. The model might be busy or the prompt was rejected.');
             }
         } catch (e: any) {
+            console.error("AI Generation Process Failed:", e);
             setMessage({ type: 'error', text: 'Error: ' + e.message })
         }
         setLoading(false)
-        setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+        setTimeout(() => setMessage({ type: '', text: '' }), 10000)
     }
 
 

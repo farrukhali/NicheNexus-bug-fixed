@@ -50,8 +50,8 @@ export function replacePlaceholders(
         }
     });
 
-    // Clean up any leftover formatting issues (double spaces, leading/trailing commas)
-    result = result.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').replace(/^,\s*|\s*,$/g, '').trim();
+    // Clean up any leftover formatting issues (double spaces)
+    result = result.replace(/[ \t]+/g, ' ').trim();
 
     return result;
 }

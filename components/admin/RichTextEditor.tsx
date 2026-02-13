@@ -45,11 +45,19 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
             <div className="flex flex-wrap items-center gap-1 p-2 bg-slate-50 border-b border-slate-200">
                 <button
                     type="button"
+                    onClick={() => execCommand('formatBlock', '<h1>')}
+                    className="p-1.5 hover:bg-white hover:shadow-sm rounded transition-all text-slate-600"
+                    title="Heading 1"
+                >
+                    <Heading1 size={18} />
+                </button>
+                <button
+                    type="button"
                     onClick={() => execCommand('formatBlock', '<h2>')}
                     className="p-1.5 hover:bg-white hover:shadow-sm rounded transition-all text-slate-600"
                     title="Heading 2"
                 >
-                    <Heading1 size={18} />
+                    <Heading2 size={18} />
                 </button>
                 <button
                     type="button"
@@ -57,7 +65,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
                     className="p-1.5 hover:bg-white hover:shadow-sm rounded transition-all text-slate-600"
                     title="Heading 3"
                 >
-                    <Heading2 size={18} />
+                    <span className="font-bold text-sm">H3</span>
                 </button>
                 <div className="w-px h-6 bg-slate-200 mx-1" />
                 <button
@@ -111,17 +119,29 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
                 ref={editorRef}
                 contentEditable
                 onInput={handleInput}
-                className="p-4 min-h-[300px] outline-none prose prose-sm prose-slate max-w-none prose-p:leading-relaxed prose-headings:font-bold"
+                className="p-4 min-h-[300px] outline-none prose prose-slate max-w-none 
+                    prose-h1:text-3xl prose-h1:font-bold prose-h1:text-slate-900 prose-h1:mb-6
+                    prose-h2:text-2xl prose-h2:font-bold prose-h2:text-slate-900 prose-h2:mb-4
+                    prose-h3:text-xl prose-h3:font-bold prose-h3:text-slate-900 prose-h3:mb-3
+                    prose-p:leading-relaxed"
                 data-placeholder={placeholder}
             />
 
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 [contenteditable]:empty:before {
                     content: attr(data-placeholder);
                     color: #94a3b8;
                     cursor: text;
                 }
-            `}</style>
+                /* Fallback for when prose classes don't apply correctly in contenteditable */
+                [contenteditable] h1 { font-size: 1.875rem; font-weight: 700; margin-bottom: 1.5rem; color: #0f172a; }
+                [contenteditable] h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #0f172a; }
+                [contenteditable] h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; color: #0f172a; }
+                [contenteditable] p { margin-bottom: 1rem; line-height: 1.625; }
+                [contenteditable] ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+                [contenteditable] ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1rem; }
+            ` }} />
         </div>
     )
 }

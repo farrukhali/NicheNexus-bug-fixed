@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -26,10 +27,13 @@ body {
 }
 
 @keyframes bounce-slow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(-25%);
     animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
   }
+
   50% {
     transform: translateY(0);
     animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
@@ -48,4 +52,65 @@ body {
 
 .animate-shine {
   animation: shine 1.5s infinite;
+}
+
+/* Homepage Intro Content Styling Fallback */
+.homepage-intro-container h1 {
+  font-size: 2.5rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin-bottom: 2rem !important;
+  line-height: 1.2 !important;
+  display: block !important;
+}
+
+.homepage-intro-container h2 {
+  font-size: 1.875rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin-top: 3rem !important;
+  margin-bottom: 1.5rem !important;
+  line-height: 1.3 !important;
+  display: block !important;
+}
+
+.homepage-intro-container h3 {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin-top: 2.5rem !important;
+  margin-bottom: 1.25rem !important;
+  display: block !important;
+}
+
+.homepage-intro-container p {
+  font-size: 1.125rem !important;
+  line-height: 1.8 !important;
+  color: #475569 !important;
+  margin-bottom: 1.5rem !important;
+  display: block !important;
+}
+
+.homepage-intro-container ul {
+  list-style-type: disc !important;
+  margin-left: 2rem !important;
+  margin-bottom: 1.5rem !important;
+  display: block !important;
+}
+
+.homepage-intro-container ol {
+  list-style-type: decimal !important;
+  margin-left: 2rem !important;
+  margin-bottom: 1.5rem !important;
+  display: block !important;
+}
+
+.homepage-intro-container li {
+  margin-bottom: 0.5rem !important;
+  padding-left: 0.5rem !important;
+}
+
+.homepage-intro-container strong {
+  font-weight: 700 !important;
+  color: #0f172a !important;
 }
