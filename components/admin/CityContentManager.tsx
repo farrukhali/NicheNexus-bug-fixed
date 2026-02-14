@@ -1,0 +1,410 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { Loader2, Play, BarChart3, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
+
+interface CityContentStats {
+    nicheSlug: string
+    contentStats: {
+        total: number
+        published: number
+        reviewed: number
+        avgQuality: number
+        byTier: Record<number, number>
+    } | null
+    totalCities: number
+    totalByTier: Record<number, number>
+    coverage: Record<string, string> | null
+}
+
+interface GenerationProgress {
+    total: number
+    completed: number
+    failed: number
+    skipped: number
+    currentCity: string
+    status: string
+    errors: { city: string; error: string }[]
+}
+
+export default function CityContentManager() {
+    const [stats, setStats] = useState<CityContentStats | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [generating, setGenerating] = useState(false)
+    const [progress, setProgress] = useState<GenerationProgress | null>(null)
+    const [error, setError] = useState<string | null>(null)
+
+    // Generation options
+    const [tier, setTier] = useState<number>(1)
+    const [stateFilter, setStateFilter] = useState('')
+    const [limit, setLimit] = useState(10)
+    const [singleCity, setSingleCity] = useState('')
+    const [singleState, setSingleState] = useState('')
+
+    const authHeader = typeof window !== 'undefined'
+        ? 'Basic ' + btoa(`${process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'admin'}:${process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'niche2026!'}`)
+        : ''
+
+    // For admin we use hardcoded credentials from env
+    const getAuthHeader = useCallback(() => {
+        // Try reading from localStorage if set during login
+        const username = localStorage.getItem('admin_username') || 'admin'
+        const password = localStorage.getItem('admin_password') || 'niche2026!'
+        return 'Basic ' + btoa(`${username}:${password}`)
+    }, [])
+
+    const fetchStats = useCallback(async () => {
+        setLoading(true)
+        setError(null)
+        try {
+            const res = await fetch('/api/admin/city-content', {
+                headers: { 'Authorization': getAuthHeader() }
+            })
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            const data = await res.json()
+            setStats(data)
+        } catch (err: any) {
+            setError(err.message)
+        } finally {
+            setLoading(false)
+        }
+    }, [getAuthHeader])
+
+    useEffect(() => {
+        fetchStats()
+    }, [fetchStats])
+
+    const handleBatchGenerate = async () => {
+        setGenerating(true)
+        setProgress(null)
+        setError(null)
+
+        try {
+            const body: any = {
+                action: 'batch',
+                tier,
+                limit,
+                delayMs: 1500,
+            }
+            if (stateFilter) body.stateId = stateFilter.toUpperCase()
+
+            const res = await fetch('/api/admin/city-content', {
+                method: 'POST',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            })
+
+            if (!res.ok) {
+                const errData = await res.json()
+                throw new Error(errData.error || `HTTP ${res.status}`)
+            }
+
+            const data = await res.json()
+            setProgress(data.progress)
+            // Refresh stats
+            await fetchStats()
+        } catch (err: any) {
+            setError(err.message)
+        } finally {
+            setGenerating(false)
+        }
+    }
+
+    const handleSingleGenerate = async () => {
+        if (!singleCity || !singleState) {
+            setError('Please enter both city and state')
+            return
+        }
+
+        setGenerating(true)
+        setProgress(null)
+        setError(null)
+
+        try {
+            const res = await fetch('/api/admin/city-content', {
+                method: 'POST',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'single',
+                    city: singleCity,
+                    stateId: singleState.toUpperCase(),
+                }),
+            })
+
+            if (!res.ok) {
+                const errData = await res.json()
+                throw new Error(errData.error || `HTTP ${res.status}`)
+            }
+
+            const data = await res.json()
+            setProgress({
+                total: 1,
+                completed: 1,
+                failed: 0,
+                skipped: 0,
+                currentCity: data.city,
+                status: 'completed',
+                errors: [],
+            })
+            // Refresh stats
+            await fetchStats()
+        } catch (err: any) {
+            setError(err.message)
+        } finally {
+            setGenerating(false)
+        }
+    }
+
+    const tierLabels: Record<number, { label: string; color: string; desc: string }> = {
+        1: { label: 'Tier 1 — Flagship', color: 'bg-red-100 text-red-700 border-red-200', desc: 'Population ≥ 100K' },
+        2: { label: 'Tier 2 — Priority', color: 'bg-orange-100 text-orange-700 border-orange-200', desc: 'Population 25K–100K' },
+        3: { label: 'Tier 3 — Standard', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', desc: 'Population 5K–25K' },
+        4: { label: 'Tier 4 — Long-tail', color: 'bg-slate-100 text-slate-700 border-slate-200', desc: 'Population < 5K' },
+    }
+
+    return (
+        <div className="space-y-8">
+            {/* Stats Overview */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <BarChart3 size={22} className="text-blue-600" />
+                        Content Generation Coverage
+                    </h3>
+                    <button
+                        onClick={fetchStats}
+                        disabled={loading}
+                        className="px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-1.5"
+                    >
+                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+                    </button>
+                </div>
+
+                {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="animate-spin text-blue-600" size={32} />
+                    </div>
+                ) : stats ? (
+                    <>
+                        {/* Summary bar */}
+                        <div className="grid grid-cols-4 gap-4 mb-8">
+                            <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-100">
+                                <div className="text-2xl font-bold text-blue-700">{stats.totalCities?.toLocaleString()}</div>
+                                <div className="text-xs text-blue-600 mt-1">Total Cities</div>
+                            </div>
+                            <div className="bg-green-50 rounded-xl p-4 text-center border border-green-100">
+                                <div className="text-2xl font-bold text-green-700">{stats.contentStats?.total || 0}</div>
+                                <div className="text-xs text-green-600 mt-1">Content Generated</div>
+                            </div>
+                            <div className="bg-amber-50 rounded-xl p-4 text-center border border-amber-100">
+                                <div className="text-2xl font-bold text-amber-700">{stats.contentStats?.published || 0}</div>
+                                <div className="text-xs text-amber-600 mt-1">Published</div>
+                            </div>
+                            <div className="bg-purple-50 rounded-xl p-4 text-center border border-purple-100">
+                                <div className="text-2xl font-bold text-purple-700">
+                                    {stats.contentStats?.avgQuality ? (stats.contentStats.avgQuality * 100).toFixed(0) + '%' : '—'}
+                                </div>
+                                <div className="text-xs text-purple-600 mt-1">Avg Quality</div>
+                            </div>
+                        </div>
+
+                        {/* Tier breakdown */}
+                        <div className="space-y-3">
+                            {[1, 2, 3, 4].map(t => {
+                                const total = stats.totalByTier?.[t] || 0
+                                const generated = stats.contentStats?.byTier?.[t] || 0
+                                const pct = total > 0 ? (generated / total * 100) : 0
+                                const info = tierLabels[t]
+
+                                return (
+                                    <div key={t} className={`rounded-xl p-4 border ${info.color}`}>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div>
+                                                <span className="font-semibold text-sm">{info.label}</span>
+                                                <span className="text-xs ml-2 opacity-70">({info.desc})</span>
+                                            </div>
+                                            <span className="font-mono text-sm">{generated} / {total}</span>
+                                        </div>
+                                        <div className="w-full bg-white/50 rounded-full h-2">
+                                            <div
+                                                className="bg-current rounded-full h-2 transition-all"
+                                                style={{ width: `${Math.min(100, pct)}%`, opacity: 0.6 }}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </>
+                ) : (
+                    <p className="text-slate-500 text-center py-8">No stats available</p>
+                )}
+            </div>
+
+            {/* Batch Generation */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <Play size={22} className="text-green-600" />
+                    Batch Content Generation
+                </h3>
+
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Population Tier</label>
+                        <select
+                            value={tier}
+                            onChange={e => setTier(Number(e.target.value))}
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white"
+                        >
+                            {[1, 2, 3, 4].map(t => (
+                                <option key={t} value={t}>{tierLabels[t].label} ({tierLabels[t].desc})</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">State Filter (optional)</label>
+                        <input
+                            type="text"
+                            value={stateFilter}
+                            onChange={e => setStateFilter(e.target.value)}
+                            placeholder="e.g., PA"
+                            maxLength={2}
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm uppercase"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Max Cities</label>
+                        <input
+                            type="number"
+                            value={limit}
+                            onChange={e => setLimit(Number(e.target.value))}
+                            min={1}
+                            max={100}
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm"
+                        />
+                    </div>
+                </div>
+
+                <button
+                    onClick={handleBatchGenerate}
+                    disabled={generating}
+                    className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                    {generating ? (
+                        <>
+                            <Loader2 size={18} className="animate-spin" /> Generating...
+                        </>
+                    ) : (
+                        <>
+                            <Play size={18} /> Generate Batch
+                        </>
+                    )}
+                </button>
+
+                <p className="text-xs text-slate-400 mt-2">
+                    Existing content will be skipped. Each city takes ~2 seconds. Cost: ~$0.01/city with GPT-4o-mini.
+                </p>
+            </div>
+
+            {/* Single City Generation */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-6">🎯 Single City Generation</h3>
+
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">City Name</label>
+                        <input
+                            type="text"
+                            value={singleCity}
+                            onChange={e => setSingleCity(e.target.value)}
+                            placeholder="e.g., Pittsburgh"
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">State Code</label>
+                        <input
+                            type="text"
+                            value={singleState}
+                            onChange={e => setSingleState(e.target.value)}
+                            placeholder="e.g., PA"
+                            maxLength={2}
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm uppercase"
+                        />
+                    </div>
+                    <div className="flex items-end">
+                        <button
+                            onClick={handleSingleGenerate}
+                            disabled={generating || !singleCity || !singleState}
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                        >
+                            {generating ? <Loader2 size={16} className="animate-spin" /> : '✨'} Generate
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Progress / Results */}
+            {progress && (
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4">
+                        {progress.status === 'completed' ? (
+                            <span className="flex items-center gap-2 text-green-700">
+                                <CheckCircle size={20} /> Generation Complete
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-2">
+                                <Loader2 size={20} className="animate-spin" /> Generating...
+                            </span>
+                        )}
+                    </h3>
+
+                    <div className="grid grid-cols-4 gap-4 mb-4">
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-slate-900">{progress.total}</div>
+                            <div className="text-xs text-slate-500">Total</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">{progress.completed}</div>
+                            <div className="text-xs text-green-600">Completed</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-amber-600">{progress.skipped}</div>
+                            <div className="text-xs text-amber-600">Skipped</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-red-600">{progress.failed}</div>
+                            <div className="text-xs text-red-600">Failed</div>
+                        </div>
+                    </div>
+
+                    {progress.errors.length > 0 && (
+                        <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+                            <h4 className="text-sm font-semibold text-red-800 mb-2 flex items-center gap-1.5">
+                                <XCircle size={14} /> Errors
+                            </h4>
+                            <ul className="text-xs text-red-700 space-y-1">
+                                {progress.errors.map((e, i) => (
+                                    <li key={i}><strong>{e.city}:</strong> {e.error}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Error display */}
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+                    <strong>Error:</strong> {error}
+                </div>
+            )}
+        </div>
+    )
+}

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { LayoutDashboard, Settings, Globe, Phone, Mail, Plus, Save, Trash2, ShieldCheck, LogOut, Wand2, Loader2, Bot, X } from 'lucide-react'
+import { LayoutDashboard, Settings, Globe, Phone, Mail, Plus, Save, Trash2, ShieldCheck, LogOut, Wand2, Loader2, Bot, X, MapPin } from 'lucide-react'
 import { generateNicheWithAI, DEFAULT_PROMPT } from '@/lib/ai-niche-generator'
 import { generateAIContent } from '@/lib/ai-content'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { CldUploadWidget } from 'next-cloudinary'
+import CityContentManager from '@/components/admin/CityContentManager'
 
 
 const DEFAULT_SITE_CONFIG = {
@@ -676,6 +677,12 @@ export default function AdminDashboard() {
                     >
                         <Wand2 size={20} /> Trust Signals
                     </button>
+                    <button
+                        onClick={() => handleTabChange('city-content')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'city-content' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
+                    >
+                        <MapPin size={20} /> City Content
+                    </button>
                 </nav>
                 <div className="p-4 border-t border-slate-800">
                     <button onClick={() => setIsLoggedIn(false)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-all">
@@ -693,7 +700,8 @@ export default function AdminDashboard() {
                                 activeTab === 'seo' ? 'Niche SEO Settings' :
                                     activeTab === 'expert' ? 'Expert Configuration' :
                                         activeTab === 'trust' ? 'Trust Signals' :
-                                            activeTab === 'niches' ? 'Niche Manager' : 'Admin Dashboard'}
+                                            activeTab === 'city-content' ? 'City Content Generator' :
+                                                activeTab === 'niches' ? 'Niche Manager' : 'Admin Dashboard'}
                         </h1>
                         <div className="flex flex-col gap-2 mt-1">
                             <p className="text-slate-500">
@@ -2396,6 +2404,10 @@ export default function AdminDashboard() {
                         </div>
                     )
                 }
+
+                {activeTab === 'city-content' && (
+                    <CityContentManager />
+                )}
             </main >
         </div >
     )

@@ -281,6 +281,98 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                 </div>
             </section>
 
+            {/* AI-Generated City-Specific Content — only renders when city_content exists */}
+            {content.hasCityContent && (
+                <section className="py-20 px-6 bg-white">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-12">
+                            <span className="inline-block px-4 py-1.5 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4">Local Insights</span>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                                {niche.name} in {formattedCity}: What You Need to Know
+                            </h2>
+                            <p className="text-slate-600 max-w-2xl mx-auto">
+                                Every market has unique conditions that affect {niche.name.toLowerCase()} work. Here&apos;s what matters specifically in {formattedCity}.
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8 mb-12">
+                            {/* Local Challenges */}
+                            {content.localChallenges && (
+                                <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-lg">⚠️</span>
+                                        <h3 className="text-lg font-bold text-slate-900">Common Challenges in {formattedCity}</h3>
+                                    </div>
+                                    <p className="text-slate-600 leading-relaxed">{content.localChallenges}</p>
+                                </div>
+                            )}
+
+                            {/* Regulations & Permits */}
+                            {content.localRegulations && (
+                                <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-lg">📋</span>
+                                        <h3 className="text-lg font-bold text-slate-900">Permits & Regulations</h3>
+                                    </div>
+                                    <p className="text-slate-600 leading-relaxed">{content.localRegulations}</p>
+                                </div>
+                            )}
+
+                            {/* Pricing Context */}
+                            {content.pricingContext && (
+                                <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-lg">💵</span>
+                                        <h3 className="text-lg font-bold text-slate-900">{formattedCity} Pricing Factors</h3>
+                                    </div>
+                                    <p className="text-slate-600 leading-relaxed">{content.pricingContext}</p>
+                                </div>
+                            )}
+
+                            {/* Climate Notes */}
+                            {content.localClimateNotes && (
+                                <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center text-lg">🌡️</span>
+                                        <h3 className="text-lg font-bold text-slate-900">Local Climate Considerations</h3>
+                                    </div>
+                                    <p className="text-slate-600 leading-relaxed">{content.localClimateNotes}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Property Types & Neighborhoods row */}
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {content.commonPropertyTypes && content.commonPropertyTypes.length > 0 && (
+                                <div className="bg-amber-50 rounded-2xl p-8 border border-amber-200">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">🏠 Common Property Types in {formattedCity}</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {content.commonPropertyTypes.map((type, i) => (
+                                            <span key={i} className="px-3 py-1.5 bg-white border border-amber-200 rounded-full text-sm text-slate-700 font-medium capitalize">
+                                                {type}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {content.notableNeighborhoods && content.notableNeighborhoods.length > 0 && (
+                                <div className="bg-blue-50 rounded-2xl p-8 border border-blue-200">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">📍 Neighborhoods We Serve in {formattedCity}</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {content.notableNeighborhoods.map((name, i) => (
+                                            <span key={i} className="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-sm text-slate-700 font-medium">
+                                                {name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Neighborhoods Section */}
             {neighborhoodData && (
                 <NeighborhoodSection data={neighborhoodData} />

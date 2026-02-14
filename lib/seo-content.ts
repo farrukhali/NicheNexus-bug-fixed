@@ -3,6 +3,7 @@ import { replacePlaceholders } from './seo-utils'
 import { getSiteConfig } from './site-config'
 import { getNicheConfig } from './niche-configs'
 import { generateAIContent } from './ai-content'
+import { getCityContent } from './city-content-generator'
 import {
     getPopulationTier,
     getSettlementType,
@@ -36,6 +37,14 @@ export interface ContentVars {
     densityContext?: string
     populationContext?: string
     militaryContext?: string
+    // AI-generated city content (from city_content table)
+    localChallenges?: string
+    localRegulations?: string
+    pricingContext?: string
+    localClimateNotes?: string
+    commonPropertyTypes?: string[]
+    notableNeighborhoods?: string[]
+    hasCityContent?: boolean  // flag indicating AI content was found
 }
 
 export interface SEOContentOptions {
@@ -371,8 +380,8 @@ export async function getSEOContent(
         }
     }
 
-    // ── Build data-driven content ──────────────────────────────────────
-    const intro = buildIntro(city, state, code, niche.name, niche.primaryService, population, density, countyName)
+    // ── Build data-driven content (template fallbacks) ──────────────────
+    let intro = buildIntro(city, state, code, niche.name, niche.primaryService, population, density, countyName)
     const whyChoose = buildWhyChoose(city, state, code, niche.name, niche.primaryService, population, density, countyName)
     const technicalSpecs = buildTechnicalSpecs(city, state, code, niche.name, density, countyName)
     const materials = buildMaterials(city, state, code, niche.name, density)
@@ -385,6 +394,42 @@ export async function getSEOContent(
         ? `Serving ${formatPopulation(population)} residents across the ${getPopulationDescriptor(population)} of ${city}.`
         : ''
     const militaryContext = getMilitaryContext(military, city, niche.name)
+
+    // ── Check for AI-generated city content ────────────────────────────
+    // If city_content exists for this city, overlay it on top of templates.
+    // This gives Tier 1/2 cities genuinely unique AI-written content while
+    // Tier 3/4 gracefully fall back to the differentiated template engine.
+    let localChallenges: string | undefined
+    let localRegulations: string | undefined
+    let pricingContext: string | undefined
+    let localClimateNotes: string | undefined
+    let commonPropertyTypes: string[] | undefined
+    let notableNeighborhoods: string[] | undefined
+    let hasCityContent = false
+
+    if (pageType === 'city' || pageType === 'service') {
+        try {
+            const nicheSlug = siteConfig.nicheSlug || process.env.NEXT_PUBLIC_NICHE_SLUG || 'default'
+            const cityContent = await getCityContent(city, code, nicheSlug)
+
+            if (cityContent) {
+                hasCityContent = true
+                // Overlay AI intro if available (it's richer than template)
+                if (cityContent.local_intro) {
+                    intro = cityContent.local_intro
+                }
+                localChallenges = cityContent.local_challenges || undefined
+                localRegulations = cityContent.local_regulations || undefined
+                pricingContext = cityContent.pricing_context || undefined
+                localClimateNotes = cityContent.local_climate_notes || undefined
+                commonPropertyTypes = cityContent.common_property_types || undefined
+                notableNeighborhoods = cityContent.notable_neighborhoods || undefined
+            }
+        } catch (err) {
+            // Silently fall back to template content if city_content lookup fails
+            console.warn('city_content lookup failed, using template:', err)
+        }
+    }
 
     // ── FAQ answers ────────────────────────────────────────────────────
     const faqs = (pageType === 'city' && niche.city_faqs && niche.city_faqs.length > 0)
@@ -412,5 +457,13 @@ export async function getSEOContent(
         densityContext,
         populationContext,
         militaryContext,
+        // AI-generated city content
+        localChallenges,
+        localRegulations,
+        pricingContext,
+        localClimateNotes,
+        commonPropertyTypes,
+        notableNeighborhoods,
+        hasCityContent,
     }
 }

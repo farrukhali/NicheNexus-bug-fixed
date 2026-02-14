@@ -452,15 +452,16 @@ Current schema is basic `LocalBusiness`. Enhance with:
 
 ## 7. Implementation Priority & Roadmap
 
-### 🔴 IMMEDIATE (This Week)
+### 🔴 IMMEDIATE (This Week) — ✅ COMPLETED
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Remove/disclaim fake reviews in `LocalReviews.tsx` | 1 hour | Removes spam risk |
-| 2 | Integrate `population`, `county_name` into city page content | 4 hours | Adds data-driven differentiation |
-| 3 | Add `populationTier` logic to vary content density per city | 3 hours | Prevents thin content on small city pages |
-| 4 | Create homepage "Featured Cities" section (top 50) | 3 hours | Fixes link depth for priority pages |
-| 5 | Add city-specific contact form component | 4 hours | Defeats doorway page classification |
+| # | Task | Status | Implementation |
+|---|------|--------|------|
+| 1 | Remove/disclaim fake reviews in `LocalReviews.tsx` | ✅ DONE | Replaced with authentic trust signals component (Licensed & Insured, Quality Guarantee, Fast Response, Transparent Pricing) |
+| 2 | Integrate `population`, `county_name`, `density` into city page content | ✅ DONE | Created `lib/city-data-utils.ts` with population tiers, settlement types, and context generators. Data flows from DB → page → content engine. |
+| 3 | Add `populationTier` logic to vary content density per city | ✅ DONE | 4-tier system: Flagship (100K+), Priority (25K-100K), Standard (5K-25K), Long-tail (<5K). Content length and depth varies by tier. |
+| 4 | Create homepage "Featured Cities" section (top 50) | ✅ DONE | Fetches top 50 cities by population. Direct homepage→city links (1-click depth). Shows city, state, and population. |
+| 5 | Add city-specific contact form component | ✅ DONE | `CityQuoteForm.tsx` — captures city/state/address context, proves genuine local landing page intent. Replaces generic CTA. |
+| 6 | Rewrite content engine for genuine differentiation | ✅ DONE | `seo-content.ts` fully rewritten: content varies by climate zone (52 states), settlement type (urban/suburban/rural), population tier (4 levels), and county. Military context when applicable. |
 
 ### 🟡 SHORT-TERM (Weeks 2-3)
 
