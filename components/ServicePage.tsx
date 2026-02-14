@@ -23,6 +23,8 @@ import WeatherWidget from '@/components/WeatherWidget'
 import LocalReviews from '@/components/LocalReviews'
 import RecentActivity from '@/components/RecentActivity'
 import SeasonalTip from '@/components/SeasonalTip'
+import CityQuoteForm from '@/components/CityQuoteForm'
+import { getPopulationTier, getSettlementType, formatPopulation, getPopulationDescriptor } from '@/lib/city-data-utils'
 
 interface ServicePageProps {
     city: string
@@ -36,17 +38,38 @@ interface ServicePageProps {
     latitude?: number
     longitude?: number
     customIntro?: string
+    // Enrichment data for content differentiation
+    population?: number
+    density?: number
+    countyName?: string
+    military?: boolean
+    incorporated?: boolean
 }
 
-export default async function ServicePage({ city, state, stateCode, zipCodes, relatedCities, latitude, longitude, customIntro }: ServicePageProps) {
+export default async function ServicePage({ city, state, stateCode, zipCodes, relatedCities, latitude, longitude, customIntro, population, density, countyName, military, incorporated }: ServicePageProps) {
     const siteConfig = await getSiteConfig()
     const niche = await getNicheConfig(siteConfig.nicheSlug)
 
     const formattedCity = city.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
     const formattedState = state.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-    // Generate Dynamic SEO Content
-    const content = await getSEOContent(formattedCity, formattedState, stateCode)
+    // City enrichment data
+    const populationTier = getPopulationTier(population)
+    const settlementType = getSettlementType(density)
+    const popFormatted = formatPopulation(population)
+    const popDescriptor = getPopulationDescriptor(population)
+
+    // Generate Dynamic SEO Content with enriched data
+    const content = await getSEOContent({
+        city: formattedCity,
+        state: formattedState,
+        stateCode,
+        pageType: 'city',
+        population,
+        density,
+        countyName,
+        military,
+    })
 
     // Fetch local weather data
     const weather = await getWeatherData(latitude, longitude, formattedCity, stateCode)
@@ -142,85 +165,104 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
             <AuthoritySignals stateCode={stateCode} city={formattedCity} />
             <RelatedServices city={formattedCity} state={stateCode} />
 
-            {/* LOCAL EXPERTS "NEAR ME" SEO SECTION */}
+            {/* LOCAL EXPERTS SECTION — Data-Driven */}
             <section className="py-20 px-6 bg-gradient-to-b from-slate-50 to-white">
                 <div className="max-w-6xl mx-auto">
-                    {/* Section Header */}
+                    {/* Section Header — uses population data */}
                     <div className="text-center mb-12">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                            Local Experts Serving {formattedCity} &amp; Surrounding Areas
+                            {niche.primaryService} Services in {formattedCity}{countyName ? `, ${countyName} County` : ''}
                         </h2>
                         <p className="text-lg text-slate-600 max-w-3xl mx-auto">
-                            When you search for <strong>{niche.primaryService.toLowerCase()} near me in {formattedCity}</strong>, you deserve contractors who truly understand your local area. Our {stateCode.toUpperCase()}-based crews have served thousands of homeowners across {formattedCity} and the surrounding communities.
+                            {popFormatted ? (
+                                <>Serving {popFormatted} residents across this {popDescriptor}, our licensed {stateCode.toUpperCase()} contractors deliver professional {niche.primaryService.toLowerCase()} tailored to {formattedCity}&apos;s {settlementType} properties and local building requirements.</>
+                            ) : (
+                                <>Our licensed {stateCode.toUpperCase()} contractors deliver professional {niche.primaryService.toLowerCase()} throughout {formattedCity} and surrounding communities, tailored to local conditions and building codes.</>
+                            )}
                         </p>
                     </div>
 
-                    {/* Two Column Cards */}
+                    {/* Data-Driven Cards */}
                     <div className="grid md:grid-cols-2 gap-8 mb-12">
-                        {/* Neighborhoods Card */}
+                        {/* Local Context Card — varies by settlement type + county */}
                         <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
                             <div className="flex items-center gap-3 mb-4">
-                                <span className="text-3xl">🏘️</span>
-                                <h3 className="text-xl font-bold text-slate-900">Neighborhoods We Serve in {formattedCity}</h3>
+                                <span className="text-3xl">{settlementType === 'urban' ? '🏙️' : settlementType === 'suburban' ? '🏘️' : '🌾'}</span>
+                                <h3 className="text-xl font-bold text-slate-900">
+                                    {settlementType === 'urban' ? 'Urban' : settlementType === 'suburban' ? 'Suburban' : 'Rural'} Service Expertise
+                                </h3>
                             </div>
                             <p className="text-slate-600 mb-4">
-                                Our <strong>{niche.name.toLowerCase()} near me in {formattedCity}</strong> specialists cover all residential zones including downtown, suburbs, and rural properties. We understand the drainage challenges and property coverage in your community.
+                                {content.densityContext}
                             </p>
-                            <p className="text-slate-600">
-                                We also serve surrounding {stateCode.toUpperCase()} communities within a 30-mile radius. Looking for <strong>{niche.name.toLowerCase()} contractors near me</strong> outside city limits? Our crews regularly travel to nearby towns to provide the same quality service.
-                            </p>
+                            {content.countyContext && (
+                                <p className="text-slate-600">
+                                    {content.countyContext}
+                                </p>
+                            )}
                         </div>
 
-                        {/* Climate-Specific Card */}
+                        {/* Climate Card — data-driven from seo-content engine */}
                         <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="text-3xl">🌤️</span>
-                                <h3 className="text-xl font-bold text-slate-900">{stateCode.toUpperCase()} Climate-Ready Solutions</h3>
+                                <h3 className="text-xl font-bold text-slate-900">{formattedState} Climate-Ready Systems</h3>
                             </div>
                             <p className="text-slate-600 mb-4">
-                                {stateCode.toUpperCase()} homeowners face unique weather challenges: {stateCode.toUpperCase()} weather requires {niche.name.toLowerCase()} solutions that can withstand local conditions. We use climate-appropriate materials and installation techniques. Local <strong>{niche.name.toLowerCase()} companies near me</strong> understand these unique challenges.
+                                {content.climateConsiderations}
                             </p>
                             <p className="text-slate-600">
-                                That&apos;s why our <strong>{niche.primaryService.toLowerCase()} near me</strong> specialists design systems specifically engineered for local climate conditions. We recommend premium materials that handle {stateCode.toUpperCase()}&apos;s weather—get protected today.
+                                {content.materials}
                             </p>
                         </div>
                     </div>
 
-                    {/* Why Choose Us Section */}
+                    {/* Military context, if applicable */}
+                    {content.militaryContext && (
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-12 flex items-start gap-4">
+                            <span className="text-2xl">🎖️</span>
+                            <div>
+                                <h4 className="font-bold text-emerald-900 mb-1">Military Community Partner</h4>
+                                <p className="text-emerald-700">{content.militaryContext}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Why Choose — data-driven content */}
                     <div className="bg-blue-50 rounded-2xl p-8 mb-12">
                         <h3 className="text-2xl font-bold text-slate-900 mb-6 text-center">
                             Why {formattedCity} Homeowners Choose Us for <span className="text-blue-600">{niche.name}</span>
                         </h3>
+                        <p className="text-slate-600 leading-relaxed max-w-4xl mx-auto text-center mb-8">
+                            {content.whyChoose}
+                        </p>
                         <div className="grid md:grid-cols-3 gap-6">
                             <div className="bg-white p-6 rounded-xl shadow-sm">
                                 <div className="text-2xl mb-3">🔧</div>
                                 <h4 className="font-bold text-slate-900 mb-2">Full-Service Solutions</h4>
                                 <p className="text-sm text-slate-600">
-                                    From <strong>{niche.services[0]?.title?.toLowerCase() || 'installation'}</strong> to <strong>{niche.services[1]?.title?.toLowerCase() || 'repairs'}</strong>, we handle everything. Complete {niche.name.toLowerCase()} solutions for your {formattedCity} property.
+                                    From <strong>{niche.services[0]?.title?.toLowerCase() || 'installation'}</strong> to <strong>{niche.services[1]?.title?.toLowerCase() || 'repairs'}</strong>, we handle everything for your {formattedCity} property.
                                 </p>
                             </div>
                             <div className="bg-white p-6 rounded-xl shadow-sm">
                                 <div className="text-2xl mb-3">⭐</div>
                                 <h4 className="font-bold text-slate-900 mb-2">Trusted Local Reputation</h4>
                                 <p className="text-sm text-slate-600">
-                                    With thousands of completed projects across {stateCode.toUpperCase()}, we&apos;re the <strong>{niche.name.toLowerCase()} company near me</strong> that {formattedCity} residents recommend.
+                                    {formattedCity} residents recommend us for reliable {niche.name.toLowerCase()} — backed by our satisfaction guarantee and {siteConfig.trustSignals?.average_rating || '4.8'}-star rating.
                                 </p>
                             </div>
                             <div className="bg-white p-6 rounded-xl shadow-sm">
                                 <div className="text-2xl mb-3">💰</div>
-                                <h4 className="font-bold text-slate-900 mb-2">Transparent Local Pricing</h4>
+                                <h4 className="font-bold text-slate-900 mb-2">Transparent {formattedState} Pricing</h4>
                                 <p className="text-sm text-slate-600">
-                                    When you search for <strong>{niche.primaryService.toLowerCase()} cost</strong>, you&apos;ll find our {formattedCity} pricing is competitive and straightforward—no hidden fees, no upsells.
+                                    Competitive, straightforward pricing for {formattedCity}{countyName ? ` and ${countyName} County` : ''} — written estimates before work begins, no hidden fees.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* CTA with Service Links */}
+                    {/* Service Links */}
                     <div className="text-center">
-                        <p className="text-lg text-slate-700 mb-6">
-                            Ready to get started with a <strong>{niche.primaryService.toLowerCase()} near me in {formattedCity}</strong>? Contact our local team today for a free, no-obligation estimate.
-                        </p>
                         <div className="flex flex-wrap justify-center gap-3">
                             {niche.services.slice(0, 4).map((service, i) => (
                                 <a
@@ -231,7 +273,7 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                                         : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                         }`}
                                 >
-                                    {service.title} {i === 0 ? formattedCity : 'Near Me'}
+                                    {service.title} in {formattedCity}
                                 </a>
                             ))}
                         </div>
@@ -245,38 +287,33 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
             )}
 
 
-            {/* Local Content Section */}
+            {/* Local Content Section — Technical + Community Data */}
             <section className="py-20 px-6 bg-slate-50">
                 <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
                     <div>
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">
-                            Why {formattedCity} Homeowners Trust {siteConfig.siteName}
+                            {niche.name} Standards in {formattedCity}, {formattedState}
                         </h2>
                         <div className="text-lg text-slate-600 mb-6 leading-relaxed space-y-4">
-                            <p dangerouslySetInnerHTML={{ __html: content.whyChoose.replace(/\*\*(.*?)\*\*/g, '<span class="text-slate-900 font-semibold">$1</span>') }} />
-                            <p dangerouslySetInnerHTML={{ __html: content.materials.replace(/\*\*(.*?)\*\*/g, '<span class="text-slate-900 font-semibold">$1</span>') }} />
+                            <p>{content.technicalSpecs}</p>
+                            {content.populationContext && (
+                                <p className="text-base text-slate-500 italic">{content.populationContext}</p>
+                            )}
                         </div>
 
                         <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 mb-4">
-                            <p className="text-sm text-slate-700 font-semibold mb-1">📐 Technical Specifications</p>
-                            <p className="text-sm text-slate-600" dangerouslySetInnerHTML={{ __html: content.technicalSpecs.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                            <p className="text-sm text-slate-700 font-semibold mb-1">🏗️ Materials & Quality</p>
+                            <p className="text-sm text-slate-600">{content.materials}</p>
                         </div>
 
                         <p className="text-sm text-amber-700">{content.climateConsiderations}</p>
                     </div>
 
-                    {/* Dynamic Activity Feed */}
+                    {/* Map + Seasonal Tip */}
                     <div className="grid gap-6 mb-8">
-                        <RecentActivity
-                            city={formattedCity}
-                            stateCode={stateCode}
-                            serviceName={niche.primaryService}
-                            zipCodes={zipCodes}
-                        />
+                        <CityMap city={formattedCity} state={stateCode} />
                         <SeasonalTip />
                     </div>
-
-                    <CityMap city={formattedCity} state={stateCode} />
                 </div>
 
             </section>
@@ -294,18 +331,18 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                         </p>
                     </div>
 
-                    {/* Trust Stats Grid */}
+                    {/* Trust Stats Grid — using siteConfig values */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
                         <div className="bg-white p-6 rounded-2xl shadow-lg text-center border border-slate-100 hover:border-blue-200 transition-all">
-                            <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">15+</div>
-                            <p className="text-slate-600 font-medium">Years Serving {stateCode.toUpperCase()}</p>
+                            <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">{siteConfig.trustSignals?.years_in_business || '15'}+</div>
+                            <p className="text-slate-600 font-medium">Years Serving {formattedState}</p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-lg text-center border border-slate-100 hover:border-blue-200 transition-all">
-                            <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">5,000+</div>
-                            <p className="text-slate-600 font-medium">Homes Served</p>
+                            <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">{siteConfig.trustSignals?.total_reviews || '5,000'}+</div>
+                            <p className="text-slate-600 font-medium">Projects Completed</p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-lg text-center border border-slate-100 hover:border-blue-200 transition-all">
-                            <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">4.9★</div>
+                            <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">{siteConfig.trustSignals?.average_rating || '4.8'}★</div>
                             <p className="text-slate-600 font-medium">Customer Rating</p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-lg text-center border border-slate-100 hover:border-blue-200 transition-all">
@@ -405,14 +442,15 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-24 px-6 bg-slate-900 text-center text-white relative overflow-hidden">
-                <div className="relative z-10 max-w-3xl mx-auto">
-                    <h2 className="text-4xl md:text-5xl font-bold mb-8">Ready to get started in {formattedCity}?</h2>
-                    <p className="text-xl text-blue-200 mb-10">Connect with local {niche.name.toLowerCase()} experts today for a free, no-obligation quote.</p>
-                    <CallBtn className="py-4 px-12 text-xl" label="Get Free Quote" />
-                </div>
-            </section>
+            {/* City-Specific Quote Form — defeats doorway page classification */}
+            <CityQuoteForm
+                city={formattedCity}
+                state={formattedState}
+                stateCode={stateCode}
+                serviceName={niche.primaryService}
+                brandName={siteConfig.siteName}
+                contactPhone={siteConfig.contactPhone}
+            />
 
             <InternalLinks currentCity={formattedCity} stateCode={stateCode} relatedCities={relatedCities} />
             <Footer city={formattedCity} stateCode={stateCode} />

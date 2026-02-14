@@ -36,7 +36,11 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
         city: formattedCity,
         state: stateName,
         stateCode,
-        pageType: 'city'
+        pageType: 'city',
+        // Pass enrichment data for content differentiation
+        population: cityData?.population,
+        density: cityData?.density,
+        countyName: cityData?.county_name,
     })
 
     return {
@@ -85,5 +89,11 @@ export default async function Page(props: PageProps) {
         latitude={cityData?.lat}
         longitude={cityData?.lng}
         customIntro={cityData?.seo_intro}
+        // Enrichment props for data-driven content differentiation
+        population={cityData?.population}
+        density={cityData?.density}
+        countyName={cityData?.county_name}
+        military={cityData?.military}
+        incorporated={cityData?.incorporated}
     />
 }

@@ -50,6 +50,16 @@ export default async function Home() {
   const uniqueStates = Array.from(new Map(data?.map(item => [item.state_id, item])).values())
     .sort((a, b) => a.state_name.localeCompare(b.state_name))
 
+  // Fetch top 50 cities by population for Featured Cities section
+  // This flattens link depth: homepage → city (1 click instead of 2+)
+  const { data: topCities } = await supabase
+    .from('usa city name')
+    .select('city, state_id, state_name, population')
+    .order('population', { ascending: false })
+    .limit(50)
+
+  const featuredCities = topCities || []
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-500 selection:text-white">
 
@@ -151,6 +161,30 @@ export default async function Home() {
             ))}
           </div>
         </section>
+
+        {/* Featured Cities — Flattened link depth for top markets */}
+        {featuredCities.length > 0 && (
+          <section id="cities" className="mb-32 scroll-mt-20">
+            <div className="text-center mb-16">
+              <span className="inline-block px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">Top Markets</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Featured Cities We Serve</h2>
+              <p className="text-slate-600 max-w-2xl mx-auto">Direct access to {niche.name.toLowerCase()} services in our most popular markets across the United States.</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {featuredCities.map((c) => (
+                <Link
+                  key={`${c.state_id}-${c.city}`}
+                  href={`/${c.state_id.toLowerCase()}/${c.city.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="group p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                >
+                  <span className="font-semibold text-slate-800 group-hover:text-blue-700 text-sm block">{c.city}</span>
+                  <span className="text-xs text-slate-500">{c.state_id} · {c.population?.toLocaleString() || ''}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Intro Section (Moved here) */}
         {siteConfig.homepageContent && siteConfig.homepageContent.replace(/<[^>]*>/g, '').trim().length > 0 && (
