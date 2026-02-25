@@ -90,7 +90,7 @@ export default function CityContentManager() {
         setError(null)
         try {
             const targetNiche = nicheOverride || selectedNiche
-            let url = '/api/admin/city-content'
+            let url = '/api/city-batch'
             if (targetNiche) {
                 // We'll update the API to handle the niche query param for stats too
                 url += `?niche=${targetNiche}`
@@ -156,7 +156,7 @@ export default function CityContentManager() {
             }
             if (stateFilter) body.stateId = stateFilter.toUpperCase()
 
-            const res = await fetch('/api/admin/city-content', {
+            const res = await fetch('/api/city-batch', {
                 method: 'POST',
                 headers: {
                     'Authorization': getAuthHeader(),
@@ -192,7 +192,7 @@ export default function CityContentManager() {
         setError(null)
 
         try {
-            const res = await fetch('/api/admin/city-content', {
+            const res = await fetch('/api/city-batch', {
                 method: 'POST',
                 headers: {
                     'Authorization': getAuthHeader(),
