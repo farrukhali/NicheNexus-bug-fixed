@@ -46,6 +46,11 @@ export default function CityContentManager() {
     const [availableNiches, setAvailableNiches] = useState<{ slug: string; name: string }[]>([])
     const [selectedNiche, setSelectedNiche] = useState<string>('')
 
+    // Generated cities list
+    const [generatedCities, setGeneratedCities] = useState<any[]>([])
+    const [citySearch, setCitySearch] = useState('')
+    const [loadingCities, setLoadingCities] = useState(false)
+
     const authHeader = typeof window !== 'undefined'
         ? 'Basic ' + btoa(`${process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'admin'}:${process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'niche2026!'}`)
         : ''
@@ -57,6 +62,28 @@ export default function CityContentManager() {
         const password = localStorage.getItem('admin_password') || 'niche2026!'
         return 'Basic ' + btoa(`${username}:${password}`)
     }, [])
+
+    const fetchGeneratedCities = useCallback(async (nicheOverride?: string) => {
+        const targetNiche = nicheOverride || selectedNiche
+        if (!targetNiche) return
+
+        setLoadingCities(true)
+        try {
+            const { data, error } = await supabase
+                .from('city_content')
+                .select('city, state_id, population_tier, content_quality_score, created_at')
+                .eq('niche_slug', targetNiche)
+                .order('created_at', { ascending: false })
+
+            if (data && !error) {
+                setGeneratedCities(data)
+            }
+        } catch (err) {
+            console.error('Failed to fetch generated cities:', err)
+        } finally {
+            setLoadingCities(false)
+        }
+    }, [selectedNiche])
 
     const fetchStats = useCallback(async (nicheOverride?: string) => {
         setLoading(true)
@@ -79,13 +106,14 @@ export default function CityContentManager() {
             // If we don't have a selected niche yet, use the one from the first stats load
             if (!selectedNiche && data.nicheSlug) {
                 setSelectedNiche(data.nicheSlug)
+                fetchGeneratedCities(data.nicheSlug)
             }
         } catch (err: any) {
             setError(err.message)
         } finally {
             setLoading(false)
         }
-    }, [getAuthHeader, selectedNiche])
+    }, [getAuthHeader, selectedNiche, fetchGeneratedCities])
 
     // Load available niches
     useEffect(() => {
@@ -110,6 +138,7 @@ export default function CityContentManager() {
     const handleNicheChange = (newNiche: string) => {
         setSelectedNiche(newNiche)
         fetchStats(newNiche)
+        fetchGeneratedCities(newNiche)
     }
 
     const handleBatchGenerate = async () => {
@@ -142,9 +171,9 @@ export default function CityContentManager() {
             }
 
             const data = await res.json()
-            setProgress(data.progress)
-            // Refresh stats
+            // Refresh stats and cities
             await fetchStats()
+            await fetchGeneratedCities()
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -192,8 +221,9 @@ export default function CityContentManager() {
                 status: 'completed',
                 errors: [],
             })
-            // Refresh stats
+            // Refresh stats and cities
             await fetchStats()
+            await fetchGeneratedCities()
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -460,6 +490,88 @@ export default function CityContentManager() {
                     )}
                 </div>
             )}
+
+            {/* Generated Cities List */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <Globe size={22} className="text-indigo-600" />
+                        Generated Cities List
+                    </h3>
+                    <div className="relative w-64">
+                        <input
+                            type="text"
+                            placeholder="Search cities..."
+                            value={citySearch}
+                            onChange={e => setCitySearch(e.target.value)}
+                            className="w-full pl-3 pr-8 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    {loadingCities ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="animate-spin text-indigo-600" size={32} />
+                        </div>
+                    ) : generatedCities.length > 0 ? (
+                        <div className="max-h-[500px] overflow-y-auto pr-2">
+                            <table className="w-full text-left">
+                                <thead className="sticky top-0 bg-white border-b border-slate-100">
+                                    <tr className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        <th className="py-3 px-2">City/State</th>
+                                        <th className="py-3 px-2">Tier</th>
+                                        <th className="py-3 px-2 text-center">Quality</th>
+                                        <th className="py-3 px-2 text-right">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50 text-sm">
+                                    {generatedCities
+                                        .filter(c => c.city.toLowerCase().includes(citySearch.toLowerCase()))
+                                        .map((cityRec, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                                <td className="py-3 px-2 font-medium text-slate-700">
+                                                    {cityRec.city}, {cityRec.state_id}
+                                                </td>
+                                                <td className="py-3 px-2">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold ${cityRec.population_tier === 1 ? 'bg-red-50 text-red-600' :
+                                                        cityRec.population_tier === 2 ? 'bg-orange-50 text-orange-600' :
+                                                            cityRec.population_tier === 3 ? 'bg-yellow-50 text-yellow-600' :
+                                                                'bg-slate-50 text-slate-600'
+                                                        }`}>
+                                                        T{cityRec.population_tier}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-2 text-center">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full ${cityRec.content_quality_score >= 0.8 ? 'bg-green-500' :
+                                                                    cityRec.content_quality_score >= 0.5 ? 'bg-amber-500' : 'bg-red-500'
+                                                                    }`}
+                                                                style={{ width: `${(cityRec.content_quality_score || 0) * 100}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-500">{(cityRec.content_quality_score || 0).toFixed(1)}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-2 text-right text-xs text-slate-400">
+                                                    {new Date(cityRec.created_at).toLocaleDateString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                            <MapPin className="mx-auto text-slate-300 mb-2" size={32} />
+                            <p className="text-slate-500 font-medium">No content generated for this niche yet.</p>
+                            <p className="text-xs text-slate-400">Use the panels above to start generating AI content.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* Error display */}
             {error && (
