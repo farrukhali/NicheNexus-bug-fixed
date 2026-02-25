@@ -23,7 +23,7 @@ import WeatherWidget from '@/components/WeatherWidget'
 import LocalReviews from '@/components/LocalReviews'
 import RecentActivity from '@/components/RecentActivity'
 import SeasonalTip from '@/components/SeasonalTip'
-import CityQuoteForm from '@/components/CityQuoteForm'
+// Removed CityQuoteForm import as requested by user
 import { getPopulationTier, getSettlementType, formatPopulation, getPopulationDescriptor } from '@/lib/city-data-utils'
 
 interface ServicePageProps {
@@ -534,15 +534,41 @@ export default async function ServicePage({ city, state, stateCode, zipCodes, re
                 </div>
             </section>
 
-            {/* City-Specific Quote Form — defeats doorway page classification */}
-            <CityQuoteForm
-                city={formattedCity}
-                state={formattedState}
-                stateCode={stateCode}
-                serviceName={niche.primaryService}
-                brandName={siteConfig.siteName}
-                contactPhone={siteConfig.contactPhone}
-            />
+            {/* Final Call to Action — simplified to phone as requested */}
+            <section className="py-20 px-6 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white overflow-hidden relative" id="contact">
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
+                </div>
+
+                <div className="relative z-10 max-w-4xl mx-auto text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 text-blue-300 text-sm font-bold mb-8">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        </span>
+                        Available Now in {formattedCity}
+                    </div>
+
+                    <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+                        Need Expert {niche.name} in {formattedCity}?
+                    </h2>
+                    <p className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto">
+                        Our local team is standing by to help with your project. Call today for a free estimate and professional service you can trust.
+                    </p>
+
+                    <div className="flex flex-col items-center gap-6">
+                        <CallBtn
+                            className="py-6 px-12 text-2xl w-full sm:w-auto shadow-2xl shadow-blue-500/20 transform hover:scale-105 transition-all"
+                            label="Call Us Now"
+                            showNumber={true}
+                        />
+                        <p className="text-slate-400">
+                            Speak with a live expert in {formattedCity} — <span className="text-blue-400 font-semibold">24/7 Availability</span>
+                        </p>
+                    </div>
+                </div>
+            </section>
 
             <InternalLinks currentCity={formattedCity} stateCode={stateCode} relatedCities={relatedCities} />
             <Footer city={formattedCity} stateCode={stateCode} />

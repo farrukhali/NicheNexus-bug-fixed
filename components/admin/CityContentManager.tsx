@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, Play, BarChart3, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
+import { Loader2, Play, BarChart3, CheckCircle, XCircle, RefreshCw, MapPin, Globe, Loader } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 interface CityContentStats {
     nicheSlug: string
@@ -41,6 +42,10 @@ export default function CityContentManager() {
     const [singleCity, setSingleCity] = useState('')
     const [singleState, setSingleState] = useState('')
 
+    // Niche selection
+    const [availableNiches, setAvailableNiches] = useState<{ slug: string; name: string }[]>([])
+    const [selectedNiche, setSelectedNiche] = useState<string>('')
+
     const authHeader = typeof window !== 'undefined'
         ? 'Basic ' + btoa(`${process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'admin'}:${process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'niche2026!'}`)
         : ''
@@ -53,26 +58,59 @@ export default function CityContentManager() {
         return 'Basic ' + btoa(`${username}:${password}`)
     }, [])
 
-    const fetchStats = useCallback(async () => {
+    const fetchStats = useCallback(async (nicheOverride?: string) => {
         setLoading(true)
         setError(null)
         try {
-            const res = await fetch('/api/admin/city-content', {
+            const targetNiche = nicheOverride || selectedNiche
+            let url = '/api/admin/city-content'
+            if (targetNiche) {
+                // We'll update the API to handle the niche query param for stats too
+                url += `?niche=${targetNiche}`
+            }
+
+            const res = await fetch(url, {
                 headers: { 'Authorization': getAuthHeader() }
             })
             if (!res.ok) throw new Error(`HTTP ${res.status}`)
             const data = await res.json()
             setStats(data)
+
+            // If we don't have a selected niche yet, use the one from the first stats load
+            if (!selectedNiche && data.nicheSlug) {
+                setSelectedNiche(data.nicheSlug)
+            }
         } catch (err: any) {
             setError(err.message)
         } finally {
             setLoading(false)
         }
-    }, [getAuthHeader])
+    }, [getAuthHeader, selectedNiche])
 
+    // Load available niches
     useEffect(() => {
+        const loadNiches = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('niche_configs')
+                    .select('slug, name')
+                    .order('name')
+
+                if (data && !error) {
+                    setAvailableNiches(data)
+                }
+            } catch (err) {
+                console.error('Failed to load niches:', err)
+            }
+        }
+        loadNiches()
         fetchStats()
-    }, [fetchStats])
+    }, [])
+
+    const handleNicheChange = (newNiche: string) => {
+        setSelectedNiche(newNiche)
+        fetchStats(newNiche)
+    }
 
     const handleBatchGenerate = async () => {
         setGenerating(true)
@@ -85,6 +123,7 @@ export default function CityContentManager() {
                 tier,
                 limit,
                 delayMs: 1500,
+                overrideNicheSlug: selectedNiche,
             }
             if (stateFilter) body.stateId = stateFilter.toUpperCase()
 
@@ -134,6 +173,7 @@ export default function CityContentManager() {
                     action: 'single',
                     city: singleCity,
                     stateId: singleState.toUpperCase(),
+                    overrideNicheSlug: selectedNiche,
                 }),
             })
 
@@ -170,6 +210,28 @@ export default function CityContentManager() {
 
     return (
         <div className="space-y-8">
+            {/* Niche Selector */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900">Niche Selection</h3>
+                        <p className="text-sm text-slate-500">Pick the niche you want to generate city content for.</p>
+                    </div>
+                    <div className="w-full md:w-64">
+                        <select
+                            value={selectedNiche}
+                            onChange={(e) => handleNicheChange(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        >
+                            <option value="">Select a niche...</option>
+                            {availableNiches.map(n => (
+                                <option key={n.slug} value={n.slug}>{n.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             {/* Stats Overview */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -178,7 +240,7 @@ export default function CityContentManager() {
                         Content Generation Coverage
                     </h3>
                     <button
-                        onClick={fetchStats}
+                        onClick={() => fetchStats()}
                         disabled={loading}
                         className="px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-1.5"
                     >

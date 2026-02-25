@@ -29,8 +29,11 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const nicheQuery = searchParams.get('niche')
+
     const siteConfig = await getSiteConfig()
-    const nicheSlug = siteConfig.nicheSlug || process.env.NEXT_PUBLIC_NICHE_SLUG || 'default'
+    const nicheSlug = nicheQuery || siteConfig.nicheSlug || process.env.NEXT_PUBLIC_NICHE_SLUG || 'default'
 
     const stats = await getCityContentStats(nicheSlug)
 
@@ -77,6 +80,7 @@ export async function POST(request: NextRequest) {
             city,               // For single mode
             model = 'openai/gpt-4o-mini',
             delayMs = 1500,
+            overrideNicheSlug,   // NEW: Explicitly choose niche
         } = body
 
         // Get config
@@ -86,7 +90,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No OpenRouter API key configured' }, { status: 400 })
         }
 
-        const nicheSlug = siteConfig.nicheSlug || process.env.NEXT_PUBLIC_NICHE_SLUG || 'default'
+        const nicheSlug = overrideNicheSlug || siteConfig.nicheSlug || process.env.NEXT_PUBLIC_NICHE_SLUG || 'default'
         const niche = await getNicheConfig(nicheSlug)
 
         const nicheConfig = {
