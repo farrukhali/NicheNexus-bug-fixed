@@ -3,16 +3,27 @@ import { leadsSupabase } from '@/lib/leads-supabase'
 
 export async function getCityData(stateCode: string, citySlug: string) {
     // Convert slug back to potential search term (e.g. 'new-york' -> 'New York')
-    // We use ilike to be safe.
     const citySearchTerm = citySlug.replace(/-/g, ' ')
 
-    const { data, error } = await supabase
-        .from('usa city name') // Table name from screenshot
+    // Try city_ascii first (handles ASCII slugs like 'mariano-colon' → 'Mariano Colon')
+    const { data: asciiData, error: asciiError } = await supabase
+        .from('usa city name')
         .select('*')
-        .ilike('state_id', stateCode) // Column 'state_id' (e.g. 'PA')
-        .ilike('city', citySearchTerm) // Column 'city' (e.g. 'Abbottstown')
-        // We limit to 1. Note: There might be duplicate city names in same state (rare but possible with counties), 
-        // strictly we might want to just take the first one found.
+        .ilike('state_id', stateCode)
+        .ilike('city_ascii', citySearchTerm)
+        .limit(1)
+        .single()
+
+    if (asciiData && !asciiError) {
+        return asciiData
+    }
+
+    // Fallback: try the original city column (for backward compatibility)
+    const { data, error } = await supabase
+        .from('usa city name')
+        .select('*')
+        .ilike('state_id', stateCode)
+        .ilike('city', citySearchTerm)
         .limit(1)
         .single()
 
